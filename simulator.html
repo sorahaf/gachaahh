@@ -605,9 +605,11 @@ function rollItem(boxId) {
   const st = getSubState(boxId);
 
   if (boxId === 'big') {
-    // Logic:
-    // - ถ้ายังไม่เคยออก Rare เลย → การันตีที่ pull ที่ 10 (pullsSinceRare >= 9)
-    // - ถ้าเคยออกแล้ว → การันตีทุก 25 pull
+    // Pity logic:
+    // - 10 pull แรก: การันตี Rare ≥ 1 ครั้ง
+    // - หลังจากนั้น: การันตีทุก 25 pull
+    // - ออก Rare ที่ไม่ซ้ำ → pity รีเซ็ต
+    // - ออก Rare ซ้ำ → pity นับต่อ ไม่รีเซ็ต
     const hasGotFirstRare = st.gotFirstRare === true;
     const guar = hasGotFirstRare ? box.guarantee2 : box.guarantee1;
     const isGuaranteed = st.pullsSinceRare >= guar - 1;
@@ -615,9 +617,22 @@ function rollItem(boxId) {
 
     if (isRare) {
       const idx = Math.floor(Math.random() * box.items.rare.length);
-      st.pullsSinceRare = 0;
+      const name = box.items.rare[idx];
       st.gotFirstRare = true;
-      return { name: box.items.rare[idx], rare: true, guaranteed: isGuaranteed };
+      const isDuplicate = st.gotRares instanceof Set
+        ? st.gotRares.has(name)
+        : (st.gotRares || []).includes(name);
+
+      if (isDuplicate) {
+        // ซ้ำ → pity นับต่อ ไม่รีเซ็ต
+        st.pullsSinceRare++;
+      } else {
+        // ใหม่ → pity รีเซ็ต + บันทึก
+        st.pullsSinceRare = 0;
+        if (st.gotRares instanceof Set) st.gotRares.add(name);
+        else st.gotRares = [...(st.gotRares || []), name];
+      }
+      return { name, rare: true, guaranteed: isGuaranteed, duplicate: isDuplicate };
     } else {
       const idx = Math.floor(Math.random() * box.items.common.length);
       st.pullsSinceRare++;
@@ -719,7 +734,10 @@ async function doPull(n) {
       placeholder.textContent = result.rare ? '⭐' : '📦';
     }
     animName.textContent = result.luckyAll ? `🏆 ${result.name}` : result.name;
-    animType.textContent = result.luckyAll ? '✨ SPECIAL — ได้ของทุกชิ้นในตู้!' : result.rare ? (result.guaranteed ? '★ Rare (การันตี)' : '★ Rare') : 'Common';
+    animType.textContent = result.luckyAll ? '✨ SPECIAL — ได้ของทุกชิ้นในตู้!'
+      : result.rare
+        ? (result.guaranteed ? '★ Rare (การันตี)' : '★ Rare') + (result.duplicate ? ' · ซ้ำ (pity นับต่อ)' : ' · ใหม่! (pity รีเซ็ต)')
+        : 'Common';
 
     document.getElementById('stage-empty').style.display = 'none';
     document.getElementById('card-grid').style.display = 'none';
@@ -804,9 +822,11 @@ function renderResults(results) {
     const specialStyle = r.isSpecial
       ? 'background:linear-gradient(135deg,rgba(251,191,36,.35),rgba(247,162,106,.25));border:2px solid var(--yellow);box-shadow:0 0 12px rgba(251,191,36,.3);'
       : '';
+    const dupStyle = r.duplicate ? 'opacity:.5;filter:grayscale(.4);' : '';
     const bonusStyle = r.luckyAll ? 'opacity:.85;' : '';
-    return `<div class="item-card ${r.rare ? 'rare' : 'common'}" style="animation-delay:${delay}s;${specialStyle}${bonusStyle}">
+    return `<div class="item-card ${r.rare ? 'rare' : 'common'}" style="animation-delay:${delay}s;${specialStyle}${dupStyle}${bonusStyle}">
       ${r.isSpecial ? `<span class="rare-star" style="color:var(--yellow);font-size:.6rem">✨SPECIAL</span>`
+        : r.duplicate ? `<span class="rare-star" style="color:var(--muted);font-size:.6rem">ซ้ำ</span>`
         : tag ? `<span class="rare-star">${tag}</span>`
         : r.luckyAll ? `<span class="rare-star" style="color:var(--teal);font-size:.6rem">+ฟรี</span>`
         : r.rare ? '<span class="rare-star">★</span>' : ''}
