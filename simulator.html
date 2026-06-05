@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎰 Gacha Simulator (Excel Rate & Debug Chance)</title>
+<title>🎰 Gacha Simulator (Exact Store Pricing)</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -43,6 +43,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .info-chip .l{font-size:.72rem;color:var(--muted);margin-top:1px}
 .info-chip.warn .v{color:var(--yellow)}
 .info-chip.good .v{color:var(--green)}
+.info-chip.thb{border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.02)}
+.info-chip.thb .v{color:var(--pink)}
 
 .pull-area{display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap}
 .pull-btn{flex:1;min-width:140px;padding:.8rem 1.2rem;border:none;border-radius:12px;
@@ -127,7 +129,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .hist-pill{padding:2px 8px;border-radius:12px;font-size:.72rem;font-family:var(--font-mono);font-weight:bold}
 .hist-pill.rare{background:rgba(247,162,106,.15);color:var(--accent2)}
 .hist-pill.common{background:rgba(255,255,255,0.05);color:var(--muted)}
-.hist-pill.bonus{background:rgba(251,191,36,.2);color:var(--yellow)}
+.hist-pill.bonus{background:rgba(251,191,36,.2);color:#1a1000}
 .hist-chance{font-family:var(--font-mono);font-size:.75rem;color:var(--teal);font-weight:700}
 
 .sub-btn{padding:.4rem .9rem;border:1px solid var(--border);border-radius:20px;background:var(--surface);
@@ -168,7 +170,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 </div>
 
 <div id="sub-box-sel" style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap"></div>
-
 <div class="info-bar" id="info-bar"></div>
 
 <div class="pull-area">
@@ -219,7 +220,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 
 <script>
 // ══════════════════════════════════════════
-// DATA CONFIG & WEIGHT DROP RATES (EXCEL SEEDS)
+// DATA CONFIG & WEIGHT DROP RATES
 // ══════════════════════════════════════════
 const BIG_SUB_BOXES = {
   female: {
@@ -306,9 +307,7 @@ const BIG_SUB_BOXES = {
 const BOXES = {
   big: {
     name: 'ตู้ใหญ่', currency: 'ตั๋ว', currencyIcon: '🎟️', costPerPull: 6, guarantee1: 10, guarantee2: 25,
-    bonuses: [
-      { atPull: 15, reward: 30 }, { atPull: 50, reward: 30 }, { atPull: 100, reward: 30 }, { atPull: 150, reward: 60 }
-    ]
+    bonuses: [{ atPull: 15, reward: 30 }, { atPull: 50, reward: 30 }, { atPull: 100, reward: 30 }, { atPull: 150, reward: 60 }]
   },
   graffiti: {
     name: 'กราฟฟิตี้', currency: 'ตั๋ว', currencyIcon: '🎟️', maxDraws: 10,
@@ -388,6 +387,18 @@ const BOXES = {
   }
 };
 
+// ตารางเรตราคาร้านค้าอย่างเป็นทางการ
+const PRICE_TIERS = [
+  { hearts: 7050, price: 3390 },
+  { hearts: 3550, price: 1760 },
+  { hearts: 2130, price: 1060 },
+  { hearts: 1370, price: 699 },
+  { hearts: 730,  price: 369 },
+  { hearts: 320,  price: 169 },
+  { hearts: 60,   price: 35 },
+  { hearts: 20,   price: 15 }
+];
+
 // ══════════════════════════════════════════
 // STATE MANAGEMENT
 // ══════════════════════════════════════════
@@ -399,34 +410,59 @@ let images = JSON.parse(localStorage.getItem('gacha_images') || '{}');
 function freshState() {
   return {
     big: {
-      female: { pulls: 0, pullsSinceRare: 0, totalCurrency: 0, bonusEarned: [], history: [], gotRares: [], gotFirstRare: false, gotAll: false },
-      male: { pulls: 0, pullsSinceRare: 0, totalCurrency: 0, bonusEarned: [], history: [], gotRares: [], gotFirstRare: false, gotAll: false },
-      house: { pulls: 0, pullsSinceRare: 0, totalCurrency: 0, bonusEarned: [], history: [], gotRares: [], gotFirstRare: false, gotAll: false }
+      female: { pulls: 0, pullsSinceRare: 0, totalHeartsUsed: 0, bonusEarned: [], history: [], gotRares: [], gotFirstRare: false, gotAll: false },
+      male: { pulls: 0, pullsSinceRare: 0, totalHeartsUsed: 0, bonusEarned: [], history: [], gotRares: [], gotFirstRare: false, gotAll: false },
+      house: { pulls: 0, pullsSinceRare: 0, totalHeartsUsed: 0, bonusEarned: [], history: [], gotRares: [], gotFirstRare: false, gotAll: false }
     },
     graffiti: {
-      female: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, pool: null },
-      male: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, pool: null }
+      female: { pulls: 0, totalHeartsUsed: 0, history: [], gotAll: false, pool: null },
+      male: { pulls: 0, totalHeartsUsed: 0, history: [], gotAll: false, pool: null }
     },
     raindrop: {
-      limpid: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, pool: null },
-      drift: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, pool: null }
+      limpid: { pulls: 0, totalHeartsUsed: 0, history: [], gotAll: false, pool: null },
+      drift: { pulls: 0, totalHeartsUsed: 0, history: [], gotAll: false, pool: null }
     }
   };
 }
 
 function loadState() {
   try {
-    let saved = localStorage.getItem('gacha_sim_state_v3');
+    let saved = localStorage.getItem('gacha_sim_state_v5');
     return saved ? JSON.parse(saved) : freshState();
   } catch(e) { return freshState(); }
 }
 
 function saveState() {
-  localStorage.setItem('gacha_sim_state_v3', JSON.stringify(state));
+  localStorage.setItem('gacha_sim_state_v5', JSON.stringify(state));
 }
 
 function getSubState() {
   return state[currentBox][currentSubBox[currentBox]];
+}
+
+// ฟังก์ชันคำนวณเงินบาทแบบแปรผันตามจำนวนหัวใจสะสมจริง
+function calculateTHBCost(totalHearts) {
+  if (totalHearts <= 0) return 0;
+  let heartsLeft = totalHearts;
+  let totalCost = 0;
+  
+  for (let tier of PRICE_TIERS) {
+    if (heartsLeft >= tier.hearts) {
+      let packs = Math.floor(heartsLeft / tier.hearts);
+      totalCost += packs * tier.price;
+      heartsLeft -= packs * tier.hearts;
+    }
+  }
+  
+  if (heartsLeft > 0) {
+    for (let i = PRICE_TIERS.length - 1; i >= 0; i--) {
+      if (PRICE_TIERS[i].hearts >= heartsLeft) {
+        totalCost += PRICE_TIERS[i].price;
+        break;
+      }
+    }
+  }
+  return totalCost;
 }
 
 // ══════════════════════════════════════════
@@ -461,20 +497,33 @@ function renderSubBoxSel() {
   ).join('');
 }
 
-function getCostForPull(boxId, pullNum) {
-  if (boxId === 'big') return BOXES.big.costPerPull;
-  if (boxId === 'graffiti') return BOXES.graffiti.ticketsPerPull[Math.min(pullNum-1, 9)];
+function getCostInHearts(boxId, pullNum) {
+  if (boxId === 'big') return BOXES.big.costPerPull * 10;
+  if (boxId === 'graffiti') return BOXES.graffiti.ticketsPerPull[Math.min(pullNum-1, 9)] * 10;
   if (boxId === 'raindrop') return BOXES.raindrop.heartsPerPull[Math.min(pullNum-1, 11)];
   return 0;
 }
 
 function updateCostTags() {
   const st = getSubState();
-  document.getElementById('cost1').textContent = `${getCostForPull(currentBox, st.pulls + 1)} ${BOXES[currentBox].currency}`;
+  const box = BOXES[currentBox];
+  
+  let currentCost = getCostInHearts(currentBox, st.pulls + 1);
+  let displayAmount = box.currency === 'ตั๋ว' ? currentCost / 10 : currentCost;
+  
+  let currentTHB = calculateTHBCost(st.totalHeartsUsed);
+  let nextTHB = calculateTHBCost(st.totalHeartsUsed + currentCost);
+  let estDiff = Math.max(0, nextTHB - currentTHB);
+  
+  document.getElementById('cost1').textContent = `${displayAmount} ${box.currency} (+~${estDiff} บาท)`;
+  
   const btn10 = document.getElementById('btn10');
   if (currentBox === 'big') {
     btn10.style.display = '';
-    document.getElementById('cost10').textContent = `${BOXES.big.costPerPull * 10} ตั๋ว`;
+    let cost10Hearts = (BOXES.big.costPerPull * 10) * 10;
+    let next10THB = calculateTHBCost(st.totalHeartsUsed + cost10Hearts);
+    let est10Diff = Math.max(0, next10THB - currentTHB);
+    document.getElementById('cost10').textContent = `60 ตั๋ว (+~${est10Diff} บาท)`;
   } else {
     btn10.style.display = 'none';
   }
@@ -488,7 +537,12 @@ function renderInfoBar() {
   let nameLabel = currentBox === 'big' ? BIG_SUB_BOXES[currentSubBox.big].name : box.subBoxes[currentSubBox[currentBox]].name;
   chips.push(`<div class="info-chip" style="grid-column:1/-1"><div class="v" style="font-size:.8rem;color:var(--muted)">${nameLabel}</div></div>`);
   chips.push(`<div class="info-chip"><div class="v">${st.pulls}</div><div class="l">Pull สะสม</div></div>`);
-  chips.push(`<div class="info-chip"><div class="v">${Number(st.totalCurrency).toLocaleString()}</div><div class="l">${box.currency}ที่ใช้</div></div>`);
+  
+  let displayCurrency = box.currency === 'ตั๋ว' ? st.totalHeartsUsed / 10 : st.totalHeartsUsed;
+  chips.push(`<div class="info-chip"><div class="v">${Number(displayCurrency).toLocaleString()}</div><div class="l">${box.currency}ที่ใช้</div></div>`);
+  
+  let currentTHB = calculateTHBCost(st.totalHeartsUsed);
+  chips.push(`<div class="info-chip thb"><div class="v">฿${currentTHB.toLocaleString()}</div><div class="l">เงินบาทสะสม (เรทร้านค้าจริง)</div></div>`);
 
   if (currentBox === 'big') {
     const limit = st.gotFirstRare ? box.guarantee2 : box.guarantee1;
@@ -518,11 +572,9 @@ function rollGacha() {
     const limit = st.gotFirstRare ? BOXES.big.guarantee2 : BOXES.big.guarantee1;
     const isPity = st.pullsSinceRare >= (limit - 1);
 
-    // Filter rare items
     const allRares = config.items.rare.map(r => r.name);
     const unobtainedRares = allRares.filter(name => !st.gotRares.includes(name));
 
-    // Force Pity Condition
     if (isPity && unobtainedRares.length > 0) {
       const rolledName = unobtainedRares[Math.floor(Math.random() * unobtainedRares.length)];
       st.gotRares.push(rolledName);
@@ -532,10 +584,8 @@ function rollGacha() {
       return { name: rolledName, rare: true, chance: 100, isPity: true, dup: false };
     }
 
-    // Normal Random
     const r = Math.random();
     if (r < config.rareRate) {
-      // Hit 5% Rare Pool
       st.gotFirstRare = true;
       const target = config.items.rare[Math.floor(Math.random() * config.items.rare.length)];
       let isDup = st.gotRares.includes(target.name);
@@ -544,41 +594,34 @@ function rollGacha() {
         st.gotRares.push(target.name);
         st.pullsSinceRare = 0;
       } else {
-        st.pullsSinceRare++; // Dup does not reset pity
+        st.pullsSinceRare++;
       }
       if (st.gotRares.length === allRares.length) st.gotAll = true;
       return { name: target.name, rare: true, chance: target.c * 100, isPity: false, dup: isDup };
     } else {
-      // Hit 95% Common Pool
       const target = config.items.common[Math.floor(Math.random() * config.items.common.length)];
       st.pullsSinceRare++;
       return { name: target.name, rare: false, chance: target.c * 100, isPity: false, dup: false };
     }
   }
 
-  // 📦 ตู้สติกเกอร์ / ตู้หัวใจเล็ก (Weighted Box Pool)
   if (currentBox === 'graffiti' || currentBox === 'raindrop') {
     const config = BOXES[currentBox].subBoxes[currentSubBox[currentBox]];
     if (!st.pool || st.pool.length === 0) {
       st.pool = JSON.parse(JSON.stringify(config.items));
     }
 
-    // Total weight remaining
     let totalW = st.pool.reduce((sum, item) => sum + item.weight, 0);
     let chosenItem = null;
-    let chosenIdx = -1;
 
-    // Last draw guarantee fallback
     if (st.pool.length === 1) {
       chosenItem = st.pool.splice(0, 1)[0];
-      chosenIdx = 0;
     } else {
       let rng = Math.random() * totalW;
       let acc = 0;
       for (let i = 0; i < st.pool.length; i++) {
         acc += st.pool[i].weight;
         if (rng <= acc) {
-          chosenIdx = i;
           chosenItem = st.pool.splice(i, 1)[0];
           break;
         }
@@ -587,7 +630,6 @@ function rollGacha() {
 
     const calculatedChance = (chosenItem.weight / totalW) * 100;
 
-    // Check if Special Box Cracked
     if (chosenItem.type === 'special') {
       const rest = st.pool.map(i => ({ name: i.name, rare: i.rare, chance: 100, instant: true }));
       st.pool = [];
@@ -603,7 +645,7 @@ function rollGacha() {
 async function doPull(n) {
   const st = getSubState();
   if (st.gotAll) {
-    showToast('คุณล้างตู้นี้ครบแล้ว! กรุณารีเซ็ตตู้หากต้องการทดสอบระบบดวงต่อครับ 🏆'); return;
+    showToast('คุณล้างตู้นี้ครบแล้ว! กรุณารีเซ็ตตู้ย่อยนี้เพื่อสุ่มทดสอบใหม่ครับ 🏆'); return;
   }
 
   document.getElementById('btn1').disabled = true;
@@ -612,28 +654,29 @@ async function doPull(n) {
   let results = [];
   for (let i = 0; i < n; i++) {
     if (st.gotAll) break;
-    // Charge cost
-    st.totalCurrency += getCostForPull(currentBox, st.pulls + 1);
+    
+    let heartCost = getCostInHearts(currentBox, st.pulls + 1);
+    st.totalHeartsUsed += heartCost;
     st.pulls++;
     
     let res = rollGacha();
     results.push(res);
     st.history.push(res);
     
-    // Check milestone refund bonuses for big box
     if (currentBox === 'big') {
       BOXES.big.bonuses.forEach((b, idx) => {
         if (st.pulls === b.atPull && !st.bonusEarned.includes(idx)) {
           st.bonusEarned.push(idx);
-          st.history.push({ name: `🎁 โบนัสสะสมครบ ${b.atPull} ครั้ง`, chance: 100, bonus: true, amount: b.reward });
-          showToast(`🎉 ระบบคืนตั๋วฟรีให้ +${b.reward} ใบจาก Milestone!`);
+          let rebateHearts = b.reward * 10;
+          st.totalHeartsUsed = Math.max(0, st.totalHeartsUsed - rebateHearts);
+          st.history.push({ name: `🎁 โบนัส Milestone ครบ ${b.atPull} ครั้ง (คืนตั๋วฟรี)`, chance: 100, bonus: true, amount: b.reward });
+          showToast(`🎉 คืนตั๋วฟรี +${b.reward} ใบจาก Milestone! ยอดเงินบาทสะสมจะลดลงตามความประหยัดจริง`);
         }
       });
     }
   }
   saveState();
 
-  // Handle single pull animation screen
   if (n === 1 && results.length === 1) {
     const res = results[0];
     const anim = document.getElementById('pull-anim');
@@ -709,7 +752,7 @@ function renderHistory() {
   
   document.getElementById('hist-row').innerHTML = st.history.slice().reverse().map(h => {
     if (h.bonus) {
-      return `<div class="hist-item"><div class="hist-left"><span class="hist-pill bonus">BONUS</span><span>${h.name}</span></div><span class="hist-chance" style="color:var(--yellow)">+${h.amount} ใบ</span></div>`;
+      return `<div class="hist-item" style="background:rgba(251,191,36,0.05); border-color:var(--yellow)"><div class="hist-left"><span class="hist-pill bonus" style="background:var(--yellow)">BONUS</span><span style="color:var(--yellow)">${h.name}</span></div><span class="hist-chance" style="color:var(--green)">+${h.amount} ตั๋วฟรี</span></div>`;
     }
     const cLabel = h.instant ? 'เหมาตู้แตก' : h.isPity ? '100% (Pity)' : `${h.chance.toFixed(3)}%`;
     const label = h.name + (h.dup ? ' (ซ้ำ ♻️)' : '');
