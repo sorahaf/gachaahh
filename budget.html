@@ -186,38 +186,63 @@ function buyWithBudget(budget) {
 // ══════════════════════════════════════════
 const GRAFFITI_COST = [3, 9, 15, 21, 27, 33, 39, 45, 45, 45];
 const GRAFFITI_CUMCOST = GRAFFITI_COST.reduce((acc,v,i) => {acc.push((acc[i-1]||0)+v); return acc;}, []);
-// Special prob per draw (from sheet): ~10.6% average; guaranteed draw 10
-// prob of special at draw k (conditional, given not gotten yet):
-// P(special at draw k) = 1/(11-k) theoretically for uniform box
-// cumulative prob of getting special by draw k = k/10
 const GRAFFITI_TOTAL = 10;
-const GRAFFITI_RARE_COUNT = 7; // Rare items per box
-const GRAFFITI_NORMAL_COUNT = 3;
+const GRAFFITI_RARE_COUNT = 7;   // Special(1) + RareT2(1) + RareT1(5)
+const GRAFFITI_NORMAL_COUNT = 3; // NormalT1(2) + NormalT2(1)
+
+// ── P(Special ออก ณ draw k | ยังไม่ได้) จาก Excel ──
+// cumulative P(ได้ Special ภายใน k draws) คำนวณจาก marginal per-draw
+// marginal draw 1-10 (conditional on not yet obtained):
+const GRAFFITI_SPECIAL_MARGINAL = [1.110e-3, 1.110e-3, 1.110e-3, 1.347e-3, 1.664e-3, 1.945e-3, 6.2611e-2, 0.123795, 0.182722, 1.0];
+// cumulative P(Special ≥ 1 ภายใน k pulls)
+const GRAFFITI_SPECIAL_CUM = (() => {
+  let cum = []; let pNot = 1;
+  for (const m of GRAFFITI_SPECIAL_MARGINAL) {
+    pNot *= (1 - m);
+    cum.push(1 - pNot);
+  }
+  cum[9] = 1.0; // draw 10 การันตี
+  return cum;
+})();
+
+// P(ได้ rare tier-2 ภายใน k pulls) — marginal จาก Excel
+const GRAFFITI_RARET2_MARGINAL = [1.7075e-2, 1.8521e-2, 2.0327e-2, 2.6351e-2, 3.6581e-2, 5.5099e-2, 8.0852e-2, 0.126839, 0.485685, 0];
+// P(ได้ rare T1 แต่ละชิ้น ภายใน k pulls) — marginal จาก Excel (5 items, prob เท่ากัน)
+const GRAFFITI_RARET1_MARGINAL  = [8.5375e-2, 8.5086e-2, 8.4725e-2, 1.0250e-1, 1.2577e-1, 1.4456e-1, 1.4424e-1, 1.3222e-1, 5.2215e-2, 0];
 
 function graffitiAnalysis(tickets) {
-  // how many complete pulls can we afford?
   let pulls = 0;
   let ticketsLeft = tickets;
-  for (let i = 0; i < GRAFFITI_CUMCOST.length; i++) {
-    if (ticketsLeft >= GRAFFITI_COST[i]) {
-      ticketsLeft -= GRAFFITI_COST[i];
-      pulls++;
-    } else break;
+  for (let i = 0; i < GRAFFITI_COST.length; i++) {
+    if (ticketsLeft >= GRAFFITI_COST[i]) { ticketsLeft -= GRAFFITI_COST[i]; pulls++; }
+    else break;
   }
-  // partial pull cost
   const nextCost = pulls < GRAFFITI_COST.length ? GRAFFITI_COST[pulls] : null;
 
-  // P(got special within `pulls` draws) for box gacha = pulls/10
-  const probSpecial = Math.min(pulls / GRAFFITI_TOTAL, 1);
+  // P(ได้ Special) — ใช้ cumulative จาก Excel table
+  const probSpecial = pulls === 0 ? 0 : GRAFFITI_SPECIAL_CUM[Math.min(pulls - 1, 9)];
 
-  // expected items: each pull guarantees 1 non-duplicate item
-  // if special obtained → get ALL remaining (full box = 10 items)
-  // expected total items = E[items before special] + P(special)*(remaining after special)
-  // For box gacha: E[position of special] = (10+1)/2 = 5.5
-  // items before special = special_pos - 1 (non-special items already pulled)
-  // simplified: expected items gotten in `pulls` draws
-  const expectedRare   = pulls >= GRAFFITI_TOTAL ? GRAFFITI_RARE_COUNT : Math.min(pulls * (GRAFFITI_RARE_COUNT / GRAFFITI_TOTAL), GRAFFITI_RARE_COUNT);
-  const expectedNormal = pulls >= GRAFFITI_TOTAL ? GRAFFITI_NORMAL_COUNT : Math.min(pulls * (GRAFFITI_NORMAL_COUNT / GRAFFITI_TOTAL), GRAFFITI_NORMAL_COUNT);
+  // E[Rare ที่ได้] — คิดจาก P(ออกอย่างน้อย 1 ครั้ง) ของแต่ละ tier สะสม
+  // Special: 1 ชิ้น × P(ได้)
+  // RareT2: 1 ชิ้น × P(ได้ภายใน k pulls)
+  // RareT1: 5 ชิ้น × P(ได้แต่ละชิ้น) — แต่ละชิ้น independent (no-dup)
+  let pNotRareT2 = 1;
+  for (let i = 0; i < pulls && i < 10; i++) pNotRareT2 *= (1 - GRAFFITI_RARET2_MARGINAL[i]);
+  const pRareT2 = Math.min(1, 1 - pNotRareT2);
+
+  let pNotRareT1each = 1;
+  for (let i = 0; i < pulls && i < 10; i++) pNotRareT1each *= (1 - GRAFFITI_RARET1_MARGINAL[i]);
+  const pRareT1each = Math.min(1, 1 - pNotRareT1each);
+
+  const expectedRare = pulls >= GRAFFITI_TOTAL
+    ? GRAFFITI_RARE_COUNT
+    : probSpecial * 1 + pRareT2 * 1 + pRareT1each * 5;
+
+  // E[Normal] = draws - E[Rare drawn] (แต่ละ pull ได้ 1 ชิ้นเสมอ)
+  // ถ้า Special ออก → ได้ทุกชิ้นทันที ดังนั้น E[Normal] ≤ GRAFFITI_NORMAL_COUNT
+  const expectedNormal = pulls >= GRAFFITI_TOTAL
+    ? GRAFFITI_NORMAL_COUNT
+    : Math.min(GRAFFITI_NORMAL_COUNT, Math.max(0, pulls - (probSpecial + pRareT2 + pRareT1each * 5)));
 
   return {pulls, probSpecial, expectedRare, expectedNormal, nextCost, ticketsLeft};
 }
@@ -230,22 +255,55 @@ function graffitiAnalysis(tickets) {
 const RAINDROP_COST = [30, 60, 90, 120, 150, 190, 230, 270, 310, 350, 390, 430];
 const RAINDROP_TOTAL = 12;
 const RAINDROP_CUMCOST = RAINDROP_COST.reduce((acc,v,i)=>{acc.push((acc[i-1]||0)+v);return acc;},[]);
-const RAINDROP_PREMIUM_COUNT = 8; // Rare items per box
-const RAINDROP_NORMAL_COUNT = 4;
+const RAINDROP_PREMIUM_COUNT = 8; // Special(1)+T2(1)+T1a(3)+T1b(3)
+const RAINDROP_NORMAL_COUNT  = 4; // T1(3)+T2(1)
+
+// Marginal P(Special ณ draw k) จาก Excel
+const RAINDROP_SPECIAL_MARGINAL = [1.110e-3, 1.110e-3, 1.110e-3, 1.110e-3, 1.144e-3, 1.221e-3, 2.0799e-2, 4.3406e-2, 7.0248e-2, 0.102297, 0.139814, 1.0];
+const RAINDROP_SPECIAL_CUM = (() => {
+  let cum = []; let pNot = 1;
+  for (const m of RAINDROP_SPECIAL_MARGINAL) {
+    pNot *= (1 - m);
+    cum.push(1 - pNot);
+  }
+  cum[11] = 1.0;
+  return cum;
+})();
+
+const RAINDROP_PREMIUMT2_MARGINAL  = [1.2064e-2, 1.3399e-2, 1.5112e-2, 1.7415e-2, 2.1092e-2, 2.7544e-2, 4.5336e-2, 7.4076e-2, 0.106974, 0.147208, 0.429007, 0];
+const RAINDROP_PREMIUMT1a_MARGINAL = [6.0319e-2, 6.3652e-2, 6.7643e-2, 7.2538e-2, 8.0379e-2, 9.2210e-2, 0.103648, 0.113685, 0.121984, 0.127335, 5.2763e-2, 0];
+const RAINDROP_PREMIUMT1b_MARGINAL = [0.120639,  0.116861,  0.112299,  0.106636,  0.103332,  0.102152,  9.7895e-2, 8.8650e-2, 7.1680e-2, 4.5682e-2, 1.1440e-2, 0];
 
 function raindropAnalysis(hearts) {
   let pulls = 0;
   let heartsLeft = hearts;
   for (let i = 0; i < RAINDROP_COST.length; i++) {
-    if (heartsLeft >= RAINDROP_COST[i]) {
-      heartsLeft -= RAINDROP_COST[i];
-      pulls++;
-    } else break;
+    if (heartsLeft >= RAINDROP_COST[i]) { heartsLeft -= RAINDROP_COST[i]; pulls++; }
+    else break;
   }
   const nextCost = pulls < RAINDROP_COST.length ? RAINDROP_COST[pulls] : null;
-  const probSpecial = Math.min(pulls / RAINDROP_TOTAL, 1);
-  const expectedPremium = pulls >= RAINDROP_TOTAL ? RAINDROP_PREMIUM_COUNT : Math.min(pulls * (RAINDROP_PREMIUM_COUNT / RAINDROP_TOTAL), RAINDROP_PREMIUM_COUNT);
-  const expectedNormal  = pulls >= RAINDROP_TOTAL ? RAINDROP_NORMAL_COUNT  : Math.min(pulls * (RAINDROP_NORMAL_COUNT  / RAINDROP_TOTAL), RAINDROP_NORMAL_COUNT);
+
+  const probSpecial = pulls === 0 ? 0 : RAINDROP_SPECIAL_CUM[Math.min(pulls - 1, 11)];
+
+  let pNotT2 = 1;
+  for (let i = 0; i < pulls && i < 12; i++) pNotT2 *= (1 - RAINDROP_PREMIUMT2_MARGINAL[i]);
+  const pT2 = Math.min(1, 1 - pNotT2);
+
+  let pNotT1a = 1;
+  for (let i = 0; i < pulls && i < 12; i++) pNotT1a *= (1 - RAINDROP_PREMIUMT1a_MARGINAL[i]);
+  const pT1aEach = Math.min(1, 1 - pNotT1a);
+
+  let pNotT1b = 1;
+  for (let i = 0; i < pulls && i < 12; i++) pNotT1b *= (1 - RAINDROP_PREMIUMT1b_MARGINAL[i]);
+  const pT1bEach = Math.min(1, 1 - pNotT1b);
+
+  const expectedPremium = pulls >= RAINDROP_TOTAL
+    ? RAINDROP_PREMIUM_COUNT
+    : probSpecial * 1 + pT2 * 1 + pT1aEach * 3 + pT1bEach * 3;
+
+  const expectedNormal = pulls >= RAINDROP_TOTAL
+    ? RAINDROP_NORMAL_COUNT
+    : Math.min(RAINDROP_NORMAL_COUNT, Math.max(0, pulls - (probSpecial + pT2 + pT1aEach * 3 + pT1bEach * 3)));
 
   return {pulls, probSpecial, expectedPremium, expectedNormal, nextCost, heartsLeft};
 }
