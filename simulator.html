@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎰 Gacha Simulator (Exact Store Pricing)</title>
+<title>🎰 Gacha Simulator (Exact Store Pricing + Net Hearts)</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -45,6 +45,8 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .info-chip.good .v{color:var(--green)}
 .info-chip.thb{border-color:rgba(244,114,182,0.4);background:rgba(244,114,182,0.02)}
 .info-chip.thb .v{color:var(--pink)}
+.info-chip.heart-net{border-color:rgba(45,212,191,0.4);background:rgba(45,212,191,0.02)}
+.info-chip.heart-net .v{color:var(--teal)}
 
 .pull-area{display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap}
 .pull-btn{flex:1;min-width:140px;padding:.8rem 1.2rem;border:none;border-radius:12px;
@@ -427,13 +429,13 @@ function freshState() {
 
 function loadState() {
   try {
-    let saved = localStorage.getItem('gacha_sim_state_v5');
+    let saved = localStorage.getItem('gacha_sim_state_v6');
     return saved ? JSON.parse(saved) : freshState();
   } catch(e) { return freshState(); }
 }
 
 function saveState() {
-  localStorage.setItem('gacha_sim_state_v5', JSON.stringify(state));
+  localStorage.setItem('gacha_sim_state_v6', JSON.stringify(state));
 }
 
 function getSubState() {
@@ -515,7 +517,9 @@ function updateCostTags() {
   let nextTHB = calculateTHBCost(st.totalHeartsUsed + currentCost);
   let estDiff = Math.max(0, nextTHB - currentTHB);
   
-  document.getElementById('cost1').textContent = `${displayAmount} ${box.currency} (+~${estDiff} บาท)`;
+  // เพิ่มการบอกมูลค่าหัวใจควบคู่ในปุ่มกดด้วย
+  let heartLabel = box.currency === 'ตั๋ว' ? ` (${currentCost} 💜)` : '';
+  document.getElementById('cost1').textContent = `${displayAmount} ${box.currency}${heartLabel} (+~${estDiff} บาท)`;
   
   const btn10 = document.getElementById('btn10');
   if (currentBox === 'big') {
@@ -523,7 +527,7 @@ function updateCostTags() {
     let cost10Hearts = (BOXES.big.costPerPull * 10) * 10;
     let next10THB = calculateTHBCost(st.totalHeartsUsed + cost10Hearts);
     let est10Diff = Math.max(0, next10THB - currentTHB);
-    document.getElementById('cost10').textContent = `60 ตั๋ว (+~${est10Diff} บาท)`;
+    document.getElementById('cost10').textContent = `60 ตั๋ว (600 💜) (+~${est10Diff} บาท)`;
   } else {
     btn10.style.display = 'none';
   }
@@ -541,13 +545,16 @@ function renderInfoBar() {
   let displayCurrency = box.currency === 'ตั๋ว' ? st.totalHeartsUsed / 10 : st.totalHeartsUsed;
   chips.push(`<div class="info-chip"><div class="v">${Number(displayCurrency).toLocaleString()}</div><div class="l">${box.currency}ที่ใช้</div></div>`);
   
+  // ชิปใหม่: แสดงจำนวนหัวใจรวมสุทธิหลังหักโบนัสตั๋วฟรีแล้ว
+  chips.push(`<div class="info-chip heart-net"><div class="v">💜 ${Number(st.totalHeartsUsed).toLocaleString()}</div><div class="l">หัวใจสุทธิ (หักลบโบนัสแล้ว)</div></div>`);
+  
   let currentTHB = calculateTHBCost(st.totalHeartsUsed);
-  chips.push(`<div class="info-chip thb"><div class="v">฿${currentTHB.toLocaleString()}</div><div class="l">เงินบาทสะสม (ประมาณ)</div></div>`);
+  chips.push(`<div class="info-chip thb"><div class="v">฿${currentTHB.toLocaleString()}</div><div class="l">เงินบาทสะสม (ตามหัวใจสุทธิ)</div></div>`);
 
   if (currentBox === 'big') {
     const limit = st.gotFirstRare ? box.guarantee2 : box.guarantee1;
     const remains = Math.max(0, limit - st.pullsSinceRare);
-    chips.push(`<div class="info-chip ${remains<=5?'warn':''}"><div class="v">${st.pullsSinceRare}</div><div class="l">Pity เกจ (การันตีชิ้นใหม่ใน ${remains})</div></div>`);
+    chips.push(`<div class="info-chip ${remains<=5?'warn':''}"><div class="v">${st.pullsSinceRare}</div><div class="l">Pity เกจ (ชิ้นใหม่ใน ${remains})</div></div>`);
     const totalRares = BIG_SUB_BOXES[currentSubBox.big].items.rare.length;
     chips.push(`<div class="info-chip good"><div class="v">${st.gotRares.length}/${totalRares}</div><div class="l">Rare ชิ้นไม่ซ้ำที่ได้</div></div>`);
   } else {
@@ -663,6 +670,7 @@ async function doPull(n) {
     results.push(res);
     st.history.push(res);
     
+    // จัดการหักตั๋วฟรี (แปลงคืนเป็นหัวใจ 1 ตั๋ว = 10 หัวใจ)
     if (currentBox === 'big') {
       BOXES.big.bonuses.forEach((b, idx) => {
         if (st.pulls === b.atPull && !st.bonusEarned.includes(idx)) {
@@ -670,7 +678,7 @@ async function doPull(n) {
           let rebateHearts = b.reward * 10;
           st.totalHeartsUsed = Math.max(0, st.totalHeartsUsed - rebateHearts);
           st.history.push({ name: `🎁 โบนัส Milestone ครบ ${b.atPull} ครั้ง (คืนตั๋วฟรี)`, chance: 100, bonus: true, amount: b.reward });
-          showToast(`🎉 คืนตั๋วฟรี +${b.reward} ใบจาก Milestone! ยอดเงินบาทสะสมจะลดลงตามความประหยัดจริง`);
+          showToast(`🎉 ได้คืนตั๋วฟรี +${b.reward} ใบ (ประหยัดไปได้ ${rebateHearts} หัวใจ!)`);
         }
       });
     }
@@ -752,7 +760,8 @@ function renderHistory() {
   
   document.getElementById('hist-row').innerHTML = st.history.slice().reverse().map(h => {
     if (h.bonus) {
-      return `<div class="hist-item" style="background:rgba(251,191,36,0.05); border-color:var(--yellow)"><div class="hist-left"><span class="hist-pill bonus" style="background:var(--yellow)">BONUS</span><span style="color:var(--yellow)">${h.name}</span></div><span class="hist-chance" style="color:var(--green)">+${h.amount} ตั๋วฟรี</span></div>`;
+      let heartSavings = h.amount * 10;
+      return `<div class="hist-item" style="background:rgba(45,212,191,0.05); border-color:var(--teal)"><div class="hist-left"><span class="hist-pill bonus" style="background:var(--teal); color:#fff">REBATE</span><span style="color:var(--teal)">${h.name}</span></div><span class="hist-chance" style="color:var(--green)">+${h.amount} ตั๋วฟรี (เซฟได้ ${heartSavings} 💜)</span></div>`;
     }
     const cLabel = h.instant ? 'เหมาตู้แตก' : h.isPity ? '100% (Pity)' : `${h.chance.toFixed(3)}%`;
     const label = h.name + (h.dup ? ' (ซ้ำ ♻️)' : '');
