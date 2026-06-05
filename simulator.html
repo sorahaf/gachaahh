@@ -381,7 +381,7 @@ const BOXES = {
   },
   raindrop: {
     name: 'เรนดรอป', icon: '🌧️', currency: 'หัวใจ', currencyIcon: '💜',
-    heartsPerPull: [30, 10, 90, 120, 150, 190, 230, 270, 310, 350, 390, 430],
+    heartsPerPull: [30, 60, 90, 120, 150, 190, 230, 270, 310, 350, 390, 430],
     luckyAll: true,
     subBoxes: {
       limpid: {
@@ -437,13 +437,13 @@ function freshState() {
                 male:   { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set(),gotFirstRare:false },
                 house:  { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set(),gotFirstRare:false }
               },
-    graffiti: { pulls: 0, totalCurrency: 0, history: [], gotAll: false,
-                female: { pulls:0, totalCurrency:0, history:[], gotAll:false },
-                male:   { pulls:0, totalCurrency:0, history:[], gotAll:false }
+    graffiti: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, remainingRare:null, remainingCommon:null,
+                female: { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingRare:null, remainingCommon:null },
+                male:   { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingRare:null, remainingCommon:null }
               },
-    raindrop: { pulls: 0, totalCurrency: 0, history: [], gotAll: false,
-                limpid: { pulls:0, totalCurrency:0, history:[], gotAll:false },
-                drift:  { pulls:0, totalCurrency:0, history:[], gotAll:false }
+    raindrop: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, remainingRare:null, remainingCommon:null,
+                limpid: { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingRare:null, remainingCommon:null },
+                drift:  { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingRare:null, remainingCommon:null }
               }
   };
 }
@@ -549,15 +549,11 @@ function updateCostTags() {
   const c1 = getCostForPull(currentBox, nextPull);
   document.getElementById('cost1').textContent = `${c1} ${box.currency}`;
 
+  const btn10 = document.getElementById('btn10');
   if (currentBox === 'graffiti' || currentBox === 'raindrop') {
-    const arr = currentBox === 'graffiti' ? box.ticketsPerPull : box.heartsPerPull;
-    let c10 = 0;
-    for (let i = 0; i < 10; i++) {
-      const idx = Math.min(st.pulls + i, arr.length - 1);
-      c10 += arr[idx];
-    }
-    document.getElementById('cost10').textContent = `${c10} ${box.currency}`;
+    btn10.style.display = 'none';
   } else {
+    btn10.style.display = '';
     document.getElementById('cost10').textContent = `${box.costPerPull * 10} ${box.currency}`;
   }
 }
@@ -631,17 +627,44 @@ function rollItem(boxId) {
 
   if (boxId === 'graffiti' || boxId === 'raindrop') {
     const arr = boxId === 'graffiti' ? box.ticketsPerPull : box.heartsPerPull;
-    const isLastPull = st.pulls >= arr.length - 1;
-    const rareRate = 1 / arr.length;
-    const isRare = isLastPull || Math.random() < rareRate;
+    const totalSlots = arr.length; // 10 or 12
 
-    if (isRare) {
-      const result = { name: '🏆 ของใหญ่!', rare: true, luckyAll: true, allItems: box.items.rare };
-      st.gotAll = true;
-      return result;
+    // Init remaining pools per sub-state (no duplicates)
+    if (!st.remainingRare)   st.remainingRare   = [...box.items.rare];
+    if (!st.remainingCommon) st.remainingCommon = [...box.items.common];
+
+    const pullIndex  = st.pulls; // 0-based index of this pull
+    const slotsLeft  = totalSlots - pullIndex;
+    const rareLeft   = st.remainingRare.length;
+    const commonLeft = st.remainingCommon.length;
+
+    // P(rare this pull) = rareLeft / slotsLeft  — true box gacha math
+    const forceRare = slotsLeft <= rareLeft; // must draw rare (no commons left for remaining slots)
+    const isRare = forceRare || (rareLeft > 0 && Math.random() < rareLeft / slotsLeft);
+
+    if (isRare && rareLeft > 0) {
+      const idx = Math.floor(Math.random() * st.remainingRare.length);
+      const name = st.remainingRare.splice(idx, 1)[0];
+
+      // Special = ชิ้นแรกของ rare list → luckyAll ได้ของที่เหลือทั้งหมดในตู้ทันที
+      const specialName = box.items.rare[0];
+      if (name === specialName) {
+        const allRemaining = [...st.remainingRare, ...st.remainingCommon];
+        st.remainingRare = [];
+        st.remainingCommon = [];
+        st.gotAll = true;
+        return { name, rare: true, luckyAll: true, allItems: allRemaining };
+      }
+
+      if (st.remainingRare.length === 0 && st.remainingCommon.length === 0) st.gotAll = true;
+      return { name, rare: true };
+    } else if (commonLeft > 0) {
+      const idx = Math.floor(Math.random() * st.remainingCommon.length);
+      const name = st.remainingCommon.splice(idx, 1)[0];
+      if (st.remainingRare.length === 0 && st.remainingCommon.length === 0) st.gotAll = true;
+      return { name, rare: false };
     } else {
-      const idx = Math.floor(Math.random() * box.items.common.length);
-      return { name: box.items.common[idx], rare: false };
+      return { name: '?', rare: false };
     }
   }
 }
@@ -695,8 +718,8 @@ async function doPull(n) {
       const placeholder = document.getElementById('anim-img') || animImg;
       placeholder.textContent = result.rare ? '⭐' : '📦';
     }
-    animName.textContent = result.luckyAll ? '🏆 ได้ทุกชิ้น!' : result.name;
-    animType.textContent = result.rare ? (result.guaranteed ? '★ Rare (การันตี)' : '★ Rare') : 'Common';
+    animName.textContent = result.luckyAll ? `🏆 ${result.name}` : result.name;
+    animType.textContent = result.luckyAll ? '✨ SPECIAL — ได้ของทุกชิ้นในตู้!' : result.rare ? (result.guaranteed ? '★ Rare (การันตี)' : '★ Rare') : 'Common';
 
     document.getElementById('stage-empty').style.display = 'none';
     document.getElementById('card-grid').style.display = 'none';
@@ -704,6 +727,10 @@ async function doPull(n) {
 
     await sleep(1200);
     animEl.classList.add('hidden');
+
+    if (result.luckyAll) {
+      showToast(`🌟 SPECIAL! ได้ทุกชิ้นในตู้ทันที! (${result.allItems.length + 1} ชิ้น)`);
+    }
 
     // check bonuses
     checkBonuses(st);
@@ -759,6 +786,8 @@ function renderResults(results) {
   let displayResults = [];
   results.forEach(r => {
     if (r.luckyAll) {
+      // แสดง Special item ก่อน แล้วตามด้วยของที่เหลือทั้งหมด
+      displayResults.push({ name: r.name, rare: true, isSpecial: true });
       r.allItems.forEach(name => displayResults.push({ name, rare: true, luckyAll: true }));
     } else {
       displayResults.push(r);
@@ -769,11 +798,18 @@ function renderResults(results) {
     const imgUrl = getImage(currentBox, r.name);
     const imgHtml = imgUrl
       ? `<img src="${imgUrl}" alt="${r.name}">`
-      : `<div class="img-placeholder">${r.rare ? '⭐' : '📦'}</div>`;
+      : `<div class="img-placeholder">${r.isSpecial ? '🌟' : r.rare ? '⭐' : '📦'}</div>`;
     const delay = idx * 0.06;
     const tag = r.rare ? getRareTag(currentBox, r.name) : '';
-    return `<div class="item-card ${r.rare ? 'rare' : 'common'}" style="animation-delay:${delay}s">
-      ${tag ? `<span class="rare-star">${tag}</span>` : (r.rare ? '<span class="rare-star">★</span>' : '')}
+    const specialStyle = r.isSpecial
+      ? 'background:linear-gradient(135deg,rgba(251,191,36,.35),rgba(247,162,106,.25));border:2px solid var(--yellow);box-shadow:0 0 12px rgba(251,191,36,.3);'
+      : '';
+    const bonusStyle = r.luckyAll ? 'opacity:.85;' : '';
+    return `<div class="item-card ${r.rare ? 'rare' : 'common'}" style="animation-delay:${delay}s;${specialStyle}${bonusStyle}">
+      ${r.isSpecial ? `<span class="rare-star" style="color:var(--yellow);font-size:.6rem">✨SPECIAL</span>`
+        : tag ? `<span class="rare-star">${tag}</span>`
+        : r.luckyAll ? `<span class="rare-star" style="color:var(--teal);font-size:.6rem">+ฟรี</span>`
+        : r.rare ? '<span class="rare-star">★</span>' : ''}
       ${imgHtml}
       <div class="iname">${r.name}</div>
     </div>`;
