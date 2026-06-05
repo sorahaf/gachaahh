@@ -542,7 +542,7 @@ function renderInfoBar() {
   chips.push(`<div class="info-chip"><div class="v">${Number(displayCurrency).toLocaleString()}</div><div class="l">${box.currency}ที่ใช้</div></div>`);
   
   let currentTHB = calculateTHBCost(st.totalHeartsUsed);
-  chips.push(`<div class="info-chip thb"><div class="v">฿${currentTHB.toLocaleString()}</div><div class="l">เงินบาทสะสม (เรทร้านค้าจริง)</div></div>`);
+  chips.push(`<div class="info-chip thb"><div class="v">฿${currentTHB.toLocaleString()}</div><div class="l">เงินบาทสะสม (ประมาณ)</div></div>`);
 
   if (currentBox === 'big') {
     const limit = st.gotFirstRare ? box.guarantee2 : box.guarantee1;
