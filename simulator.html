@@ -432,10 +432,10 @@ function loadState() {
 }
 function freshState() {
   return {
-    big:      { pulls: 0, pullsSinceRare: 0, totalCurrency: 0, bonusEarned: [], history: [], gotRares: new Set(),
-                female: { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set() },
-                male:   { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set() },
-                house:  { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set() }
+    big:      { pulls: 0, pullsSinceRare: 0, totalCurrency: 0, bonusEarned: [], history: [], gotRares: new Set(), gotFirstRare:false,
+                female: { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set(),gotFirstRare:false },
+                male:   { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set(),gotFirstRare:false },
+                house:  { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set(),gotFirstRare:false }
               },
     graffiti: { pulls: 0, totalCurrency: 0, history: [], gotAll: false,
                 female: { pulls:0, totalCurrency:0, history:[], gotAll:false },
@@ -580,8 +580,8 @@ function renderInfoBar() {
   chips.push(`<div class="info-chip"><div class="v">${fmt(st.totalCurrency)}</div><div class="l">${box.currency}ที่ใช้</div></div>`);
 
   if (currentBox === 'big') {
-    const inFirstBlock = st.pulls < box.guarantee1;
-    const guar = inFirstBlock ? box.guarantee1 : box.guarantee2;
+    const hasGotFirstRare = st.gotFirstRare === true;
+    const guar = hasGotFirstRare ? box.guarantee2 : box.guarantee1;
     const toGuar = Math.max(0, guar - st.pullsSinceRare);
     const warn = toGuar <= 5;
     chips.push(`<div class="info-chip ${warn ? 'warn' : ''}"><div class="v">${st.pullsSinceRare}</div><div class="l">Pull นับ pity (การันตีใน ${toGuar})</div></div>`);
