@@ -56,6 +56,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 .pull-btn:active{transform:scale(.97)}
 .pull1{background:linear-gradient(135deg,#3d5af1,#7c6af7);color:#fff}
 .pull10{background:linear-gradient(135deg,#c55a11,#f7a26a);color:#fff}
+.reset-pull{flex:0 0 auto;min-width:auto;background:var(--surface);border:1px solid var(--border);
+  color:var(--muted)}
+.reset-pull:hover{border-color:var(--red);color:var(--red)}
 .pull-btn:disabled{opacity:.4;cursor:not-allowed}
 .cost-tag{font-size:.73rem;opacity:.85;margin-top:2px;display:block}
 
@@ -126,7 +129,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 /* history */
 .history-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem}
 .history-bar summary{cursor:pointer;font-size:.83rem;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.05em}
-.hist-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;max-height:120px;overflow-y:auto}
+.hist-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;max-height:280px;overflow-y:auto}
 .hist-pill{padding:2px 10px;border-radius:20px;font-size:.72rem;font-family:var(--font-mono)}
 .hist-pill.rare{background:rgba(247,162,106,.15);color:var(--accent2)}
 .hist-pill.common{background:var(--surface2);color:var(--muted)}
@@ -190,6 +193,9 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
     🎰 Pull 10 ครั้ง
     <span class="cost-tag" id="cost10"></span>
   </button>
+  <button class="pull-btn reset-pull" onclick="resetAll()" id="btnReset" title="รีเซ็ตประวัติทั้งหมด">
+    🔄 รีเซ็ต
+  </button>
 </div>
 
 <!-- Stage -->
@@ -223,7 +229,6 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <details class="history-bar" style="margin-top:.75rem">
   <summary>📜 ประวัติการสุ่ม</summary>
   <div class="hist-row" id="hist-row"></div>
-  <button class="reset-btn" onclick="resetAll()">🔄 รีเซ็ตทั้งหมด</button>
 </details>
 
 </div><!-- /wrap -->
@@ -337,7 +342,9 @@ const BOXES = {
     bonuses: [
       { atPull: 15,  reward: 30,  rewardUnit: 'ตั๋ว' },
       { atPull: 50,  reward: 30,  rewardUnit: 'ตั๋ว' },
-      { atPull: 100, reward: 10,  rewardUnit: 'ตั๋ว' },
+      { atPull: 50,  reward: 30,  rewardUnit: 'ตั๋ว' },
+      { atPull: 100, reward: 30,  rewardUnit: 'ตั๋ว' },
+      { atPull: 150, reward: 60,  rewardUnit: 'ตั๋ว' },
     ],
     // items ถูก override จาก BIG_SUB_BOXES ตาม subBox ที่เลือก
     items: { rare: BIG_SUB_BOXES.female.items.rare.map(r=>r.name), common: BIG_SUB_BOXES.female.items.common }
@@ -488,6 +495,7 @@ function selectBox(id, el) {
   renderSubBoxSel();
   syncBoxItems();
   renderInfoBar();
+  renderHistory();
   renderStageEmpty();
   updateCostTags();
 }
@@ -499,6 +507,7 @@ function selectSubBox(sub) {
   });
   syncBoxItems();
   renderInfoBar();
+  renderHistory();
   renderStageEmpty();
   updateCostTags();
   renderImgList();
@@ -583,9 +592,14 @@ function renderInfoBar() {
     chips.push(`<div class="info-chip ${warn ? 'warn' : ''}"><div class="v">${st.pullsSinceRare}</div><div class="l">Pull นับ pity (การันตีใน ${toGuar})</div></div>`);
     const rareCount = st.history.filter(h => h.rare).length;
     chips.push(`<div class="info-chip good"><div class="v">${rareCount}</div><div class="l">Rare ที่ได้</div></div>`);
-    const nextBonus = box.bonuses.find(b => !st.bonusEarned.includes(b.atPull));
-    if (nextBonus) {
-      chips.push(`<div class="info-chip"><div class="v">${nextBonus.atPull - st.pulls}</div><div class="l">Pull ถึงโบนัส (+${nextBonus.reward} ${nextBonus.rewardUnit})</div></div>`);
+    const nextBonusIdx = box.bonuses.findIndex((b, i) => !st.bonusEarned.includes(i));
+    if (nextBonusIdx >= 0) {
+      const nb = box.bonuses[nextBonusIdx];
+      // รวม reward ของทุกโบนัสที่ atPull เดียวกัน (เช่น pull 50 มี 2 ตัว)
+      const sameReward = box.bonuses
+        .filter((b, i) => b.atPull === nb.atPull && !st.bonusEarned.includes(i))
+        .reduce((s, b) => s + b.reward, 0);
+      chips.push(`<div class="info-chip"><div class="v">${nb.atPull - st.pulls}</div><div class="l">Pull ถึงโบนัส (+${sameReward} ${nb.rewardUnit})</div></div>`);
     }
   } else {
     const arr = currentBox === 'graffiti' ? box.ticketsPerPull : box.heartsPerPull;
@@ -938,9 +952,9 @@ async function doPull(n) {
 function checkBonuses(st) {
   if (currentBox !== 'big') return;
   const box = BOXES.big;
-  box.bonuses.forEach(b => {
-    if (st.pulls >= b.atPull && !st.bonusEarned.includes(b.atPull)) {
-      st.bonusEarned.push(b.atPull);
+  box.bonuses.forEach((b, i) => {
+    if (st.pulls >= b.atPull && !st.bonusEarned.includes(i)) {
+      st.bonusEarned.push(i);
       st.history.push({ name: `🎁 โบนัส pull ${b.atPull}: +${b.reward} ${b.rewardUnit}`, bonus: true });
       showToast(`🎉 โบนัส! ได้รับ ${b.reward} ${b.rewardUnit} (ครบ ${b.atPull} pull)`);
     }
@@ -1003,7 +1017,10 @@ function renderStageEmpty() {
 
 function renderHistory() {
   const st = getSubState(currentBox);
-  document.getElementById('hist-row').innerHTML = st.history.slice(-10).reverse().map(h => {
+  const all = st.history.slice().reverse();
+  const summary = document.querySelector('.history-bar summary');
+  if (summary) summary.textContent = `📜 ประวัติการสุ่ม (${st.history.length})`;
+  document.getElementById('hist-row').innerHTML = all.map(h => {
     if (h.bonus) return `<span class="hist-pill bonus">${h.name}</span>`;
     return `<span class="hist-pill ${h.rare ? 'rare' : 'common'}">${h.luckyAll ? '🏆ALL' : h.name}</span>`;
   }).join('');
@@ -1112,6 +1129,20 @@ Object.keys(state).forEach(k => {
       state[k][sub].gotRares = new Set(state[k][sub].gotRares);
   });
 });
+
+// Migrate old bonusEarned (เก็บค่า atPull) → index-based ตาม pulls ปัจจุบัน
+(function migrateBonusEarned() {
+  const bonuses = BOXES.big.bonuses;
+  ['big','female','male','house'].forEach(key => {
+    const st = key === 'big' ? state.big : state.big[key];
+    if (!st || !Array.isArray(st.bonusEarned)) return;
+    // ถ้ามีค่าที่ไม่ใช่ index ที่ถูกต้อง (เช่น 15,100,150) ให้คำนวณใหม่จากจำนวน pull
+    const looksLegacy = st.bonusEarned.some(v => v >= bonuses.length);
+    if (looksLegacy) {
+      st.bonusEarned = bonuses.map((b, i) => i).filter(i => st.pulls >= bonuses[i].atPull);
+    }
+  });
+})();
 
 syncBoxItems();
 renderSubBoxSel();
