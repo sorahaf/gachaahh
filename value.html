@@ -222,6 +222,42 @@
 
   footer { text-align: center; margin-top: 3rem; font-size: 0.78rem; color: var(--muted); }
   footer a { color: var(--accent); text-decoration: none; }
+
+  /* Stat / distribution graph sections */
+  .graph-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.25rem; margin-top: 1.5rem;
+  }
+  .graph-card h3 {
+    font-size: 0.8rem; font-family: var(--font-mono); color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;
+  }
+  .graph-card .sub { font-size: 0.8rem; color: var(--muted); margin-bottom: 1.1rem; }
+
+  /* small-box toggle */
+  .box-toggle { display: flex; gap: 6px; margin-bottom: 1.1rem; }
+  .box-toggle button {
+    flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface2); color: var(--muted);
+    font-family: var(--font-th); font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
+  }
+  .box-toggle button.active { border-color: var(--green); color: var(--text); background: rgba(74,222,128,0.08); }
+
+  /* vertical column chart */
+  .col-chart { display: flex; align-items: flex-end; gap: 4px; height: 180px;
+    padding: 0 2px; border-bottom: 1px solid var(--border); }
+  .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+    align-items: center; height: 100%; gap: 4px; min-width: 0; }
+  .col .bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 0.4s ease; min-height: 2px; }
+  .col .barval { font-family: var(--font-mono); font-size: 0.6rem; color: var(--text);
+    white-space: nowrap; }
+  .col-axis { display: flex; gap: 4px; padding: 6px 2px 0; }
+  .col-axis div { flex: 1; text-align: center; font-family: var(--font-mono);
+    font-size: 0.62rem; color: var(--muted); min-width: 0; }
+  .bar-special { background: linear-gradient(180deg, var(--yellow), rgba(247,162,106,0.6)); }
+  .bar-cum { background: linear-gradient(180deg, var(--green), rgba(74,222,128,0.5)); }
+  .bar-complete { background: linear-gradient(180deg, var(--accent), rgba(124,106,247,0.45)); }
+  .cum-line { font-size: 0.7rem; color: var(--green); font-family: var(--font-mono); }
 </style>
 </head>
 <body>
@@ -241,9 +277,9 @@
     <div class="config-box big">
       <h3>🏛️ ตู้ใหญ่</h3>
       <div class="field"><label>อัตรา Rare (%)</label><input type="number" id="b_rate" value="5" min="0.1" max="100" step="0.1"></div>
-      <div class="field"><label>จำนวน Rare ทั้งหมด (ชิ้น)</label><input type="number" id="b_count" value="22" min="1" max="100"></div>
+      <div class="field"><label>จำนวน Rare ทั้งหมด (ชิ้น)</label><input type="number" id="b_count" value="11" min="1" max="100"></div>
       <div class="field"><label>การันตีแรก (pull ที่)</label><input type="number" id="b_guar1" value="10" min="1" max="200"></div>
-      <div class="field"><label>การันตีถัดไปถ้าออกซ้ำ (pull)</label><input type="number" id="b_guar2" value="30" min="1" max="200"></div>
+      <div class="field"><label>การันตีถัดไปถ้าออกซ้ำ (pull)</label><input type="number" id="b_guar2" value="25" min="1" max="200"></div>
     </div>
     <div class="config-box small">
       <h3>🎪 ตู้เล็ก</h3>
@@ -278,6 +314,18 @@
         <tbody id="big-tbody"></tbody>
       </table>
     </div>
+
+    <!-- Complete-all-rares graph (ตู้ใหญ่) -->
+    <div class="graph-card">
+      <h3>🏆 สถิติการเก็บ Rare ครบทุกชิ้น</h3>
+      <p class="sub">จำลองการสุ่ม 30,000 ครั้ง ตามเรต + ระบบการันตี (ครั้งแรกใน <span id="g1lbl">10</span> pull, จากนั้นทุก <span id="g2lbl">25</span> pull ได้ตัวที่ยังไม่มี) — แสดงโอกาสที่จะเก็บครบ <span id="ncntlbl">11</span> ชิ้นภายใน N pull</p>
+      <div class="stats-row" id="big-complete-stats"></div>
+      <div class="col-chart" id="big-complete-chart"></div>
+      <div class="col-axis" id="big-complete-axis"></div>
+      <div class="legend" style="margin-top:0.75rem">
+        <span><span class="dot" style="background:var(--accent)"></span>โอกาสเก็บครบภายใน N pull (สะสม)</span>
+      </div>
+    </div>
   </div>
 
   <!-- TAB: SMALL -->
@@ -297,6 +345,23 @@
         <h3>🍀 โชคดีก่อนการันตี — ได้ทุกชิ้นในตู้</h3>
         <p style="font-size:0.82rem;color:var(--muted);margin-bottom:1rem">ถ้าออก Rare ก่อนครบการันตี จะได้ทุกชิ้นในตู้เลย ราคาต่อชิ้นถูกมาก</p>
         <div class="lucky-grid" id="lucky-grid"></div>
+      </div>
+    </div>
+
+    <!-- Special distribution graph (ตู้เล็ก) -->
+    <div class="graph-card">
+      <h3>🌟 สถิติการได้ Special — แต่ละช่วงดรอป</h3>
+      <p class="sub">โอกาสที่จะ "ออก Special พอดี" ในแต่ละดรอป (อิงเรตจริงจาก patch) — Special การันตีออกภายในดรอปสุดท้ายเสมอ</p>
+      <div class="box-toggle" id="sp-toggle">
+        <button class="active" onclick="setSpecialBox('graffiti',this)">🎨 กราฟฟิตี้ (10 ดรอป)</button>
+        <button onclick="setSpecialBox('raindrop',this)">🌧️ เรนดรอป (12 ดรอป)</button>
+      </div>
+      <div class="stats-row" id="sp-stats"></div>
+      <div class="col-chart" id="sp-chart"></div>
+      <div class="col-axis" id="sp-axis"></div>
+      <div class="legend" style="margin-top:0.75rem">
+        <span><span class="dot" style="background:var(--yellow)"></span>โอกาสออก Special พอดีดรอปนี้</span>
+        <span><span class="dot" style="background:var(--green)"></span>สะสม (ออกแล้วภายในดรอปนี้)</span>
       </div>
     </div>
   </div>
@@ -514,7 +579,155 @@ function copyLink() {
   navigator.clipboard.writeText(location.href).then(() => alert('คัดลอกลิงก์แล้ว! 📋'));
 }
 
-function renderAll() { renderBig(); renderSmall(); renderCompare(); }
+// ══════════════════════════════════════════
+// ตู้เล็ก: สถิติการได้ Special แต่ละดรอป (เรตจริงจาก patch 2025.11.28)
+// p[i] = โอกาสออก Special ที่ดรอป i เมื่อยังไม่ได้ (conditional)
+// ══════════════════════════════════════════
+const SMALL_SPECIAL = {
+  graffiti: { label:'กราฟฟิตี้', cur:'ตั๋ว',
+    p:[0.00111,0.00111,0.00111,0.001347,0.001664,0.001945,0.062611,0.123795,0.182722,1.0],
+    cost:[3,9,15,21,27,33,39,45,45,45] },
+  raindrop: { label:'เรนดรอป', cur:'หัวใจ',
+    p:[0.00111,0.00111,0.00111,0.00111,0.001144,0.001221,0.020799,0.043406,0.070248,0.102297,0.139814,1.0],
+    cost:[30,60,90,120,150,190,230,270,310,350,390,430] }
+};
+let specialBox = 'graffiti';
+
+function setSpecialBox(id, el) {
+  specialBox = id;
+  document.querySelectorAll('#sp-toggle button').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderSpecialDist();
+}
+
+function renderSpecialDist() {
+  const b = SMALL_SPECIAL[specialBox];
+  const n = b.p.length;
+  const exact = [], cum = [];
+  let survive = 1; // โอกาสยังไม่ได้ Special ก่อนถึงดรอปนี้
+  let acc = 0;
+  for (let i = 0; i < n; i++) {
+    const e = survive * b.p[i];   // ออก Special พอดีดรอป i
+    exact.push(e);
+    survive *= (1 - b.p[i]);
+    acc += e; cum.push(acc);
+  }
+  // สถิติ
+  const expDraw = exact.reduce((s, e, i) => s + e * (i + 1), 0);
+  let median = n; for (let i = 0; i < n; i++) { if (cum[i] >= 0.5) { median = i + 1; break; } }
+  // ต้นทุนสะสมถึงแต่ละดรอป + ต้นทุนคาดหวังจนได้ Special
+  const cumCost = []; let cc = 0;
+  for (let i = 0; i < n; i++) { cc += b.cost[i]; cumCost.push(cc); }
+  const expCost = exact.reduce((s, e, i) => s + e * cumCost[i], 0);
+  const peakIdx = exact.indexOf(Math.max(...exact));
+
+  document.getElementById('sp-stats').innerHTML = `
+    <div class="stat-card"><div class="val" style="color:var(--yellow)">ดรอป ${peakIdx + 1}</div><div class="lbl">ช่วงที่ออกบ่อยสุด</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--green)">ดรอป ${median}</div><div class="lbl">ครึ่งหนึ่งได้ภายใน (median)</div></div>
+    <div class="stat-card"><div class="val">${expDraw.toFixed(1)}</div><div class="lbl">เฉลี่ยได้ที่ดรอป</div></div>
+    <div class="stat-card"><div class="val">${fmt(Math.round(expCost))}</div><div class="lbl">${b.cur}เฉลี่ยจนได้ Special</div></div>
+  `;
+
+  const maxE = Math.max(...exact);
+  document.getElementById('sp-chart').innerHTML = exact.map((e, i) => {
+    const hE = (e / maxE * 100).toFixed(1);
+    const hC = (cum[i] * 100).toFixed(1);
+    return `<div class="col" title="ดรอป ${i+1}: ออกพอดี ${(e*100).toFixed(1)}% · สะสม ${hC}%">
+      <span class="barval">${(e*100).toFixed(e < 0.01 ? 2 : 1)}%</span>
+      <div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:100%">
+        <div class="bar bar-special" style="height:${hE}%"></div>
+        <div class="bar bar-cum" style="height:${hC}%;opacity:.55"></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('sp-axis').innerHTML = exact.map((_, i) => `<div>${i + 1}</div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// ตู้ใหญ่: Monte Carlo เก็บ Rare ครบทุกชิ้น (coupon collector + pity)
+// ══════════════════════════════════════════
+function simulateBigCompletion(rate, N, guar1, guar2, trials) {
+  const results = new Array(trials);
+  for (let t = 0; t < trials; t++) {
+    const got = new Array(N).fill(false);
+    let collected = 0, pity = 0, gotFirst = false, pulls = 0;
+    while (collected < N) {
+      pulls++; pity++;
+      const guar = gotFirst ? guar2 : guar1;
+      const forced = pity >= guar;
+      const isRare = forced || Math.random() < rate;
+      if (isRare) {
+        let idx;
+        if (forced) { // การันตีตัวที่ยังไม่มี
+          const un = [];
+          for (let k = 0; k < N; k++) if (!got[k]) un.push(k);
+          idx = un[(Math.random() * un.length) | 0];
+        } else {
+          idx = (Math.random() * N) | 0;
+        }
+        gotFirst = true;
+        if (!got[idx]) { got[idx] = true; collected++; pity = 0; }
+      }
+      if (pulls > 5000) break; // safety
+    }
+    results[t] = pulls;
+  }
+  return results;
+}
+
+function percentile(sorted, p) {
+  const idx = Math.min(sorted.length - 1, Math.floor(p * sorted.length));
+  return sorted[idx];
+}
+
+function renderBigComplete() {
+  const c = getConfig().b;
+  document.getElementById('g1lbl').textContent = c.guar1;
+  document.getElementById('g2lbl').textContent = c.guar2;
+  document.getElementById('ncntlbl').textContent = c.count;
+
+  const trials = 30000;
+  const res = simulateBigCompletion(c.rate, c.count, c.guar1, c.guar2, trials);
+  res.sort((a, b) => a - b);
+  const mean = res.reduce((s, v) => s + v, 0) / trials;
+  const p50 = percentile(res, 0.5);
+  const p90 = percentile(res, 0.9);
+  const pricePerPull = PRICE_PER_TICKET;
+
+  document.getElementById('big-complete-stats').innerHTML = `
+    <div class="stat-card"><div class="val">${fmt(p50)}</div><div class="lbl">Pull ที่ครบ (median)</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--yellow)">${fmt(p90)}</div><div class="lbl">90% ครบภายใน (pull)</div></div>
+    <div class="stat-card"><div class="val">${mean.toFixed(0)}</div><div class="lbl">เฉลี่ย (pull)</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--accent2)">฿${fmt(Math.round(p50 * pricePerPull))}</div><div class="lbl">ราคา ณ median</div></div>
+  `;
+
+  // cumulative curve: 20 buckets จาก 0 ถึง ~p99
+  const maxPull = percentile(res, 0.99);
+  const buckets = 20;
+  const step = Math.max(1, Math.ceil(maxPull / buckets));
+  const cols = [];
+  for (let k = 1; k <= buckets; k++) {
+    const x = k * step;
+    const done = res.filter(v => v <= x).length / trials;
+    cols.push({ x, p: done });
+  }
+  document.getElementById('big-complete-chart').innerHTML = cols.map(co => {
+    const h = (co.p * 100).toFixed(1);
+    return `<div class="col" title="ภายใน ${co.x} pull: ${h}%">
+      <span class="barval">${co.p >= 0.995 ? '100' : (co.p * 100).toFixed(0)}</span>
+      <div class="bar bar-complete" style="height:${Math.max(2, co.p * 100)}%"></div>
+    </div>`;
+  }).join('');
+  document.getElementById('big-complete-axis').innerHTML = cols.map((co, i) =>
+    `<div>${i % 2 === 0 ? co.x : ''}</div>`).join('');
+}
+
+let _simTimer;
+function renderAll() {
+  renderBig(); renderSmall(); renderCompare(); renderSpecialDist();
+  clearTimeout(_simTimer);
+  _simTimer = setTimeout(renderBigComplete, 120);
+}
 
 document.querySelectorAll('input').forEach(el => el.addEventListener('input', renderAll));
 renderAll();
