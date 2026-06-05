@@ -143,9 +143,7 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <div class="sec-head"><h3>🏛️ ถ้าใช้กับตู้ใหญ่</h3><div class="sec-divider"></div></div>
 <div class="result-grid" id="big-cards"></div>
 
-<div class="note">
-  <strong>หมายเหตุ:</strong> คำนวณโดยซื้อแพ็กที่คุ้มที่สุดก่อน (699฿ = 1,370 ใจ / 22.83 ตั๋ว) · ตู้ใหญ่ 1 รอบ = 6 ตั๋ว/ครั้ง · โอกาสได้ของใหญ่คำนวณจากสูตร Box Gacha (ไม่มีของซ้ำ) · ตัวเลข "คาดการณ์" คือค่าเฉลี่ยทางสถิติ ผลจริงอาจต่างกัน
-</div>
+<div class="note">⚠️ เครื่องมือนี้จัดทำขึ้นเพื่อการทดสอบเท่านั้น หากมีข้อผิดพลาดประการใด ต้องขออภัยเป็นอย่างสูง</div>
 </div>
 
 <script>
@@ -153,16 +151,16 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 // PRICE TABLE (from spreadsheet)
 // ══════════════════════════════════════════
 const PRICE_TABLE = [
-  {baht:15,   hearts:20,   tickets:1/3},
-  {baht:35,   hearts:60,   tickets:1},
-  {baht:169,  hearts:320,  tickets:16/3},
-  {baht:369,  hearts:730,  tickets:73/6},
-  {baht:699,  hearts:1370, tickets:137/6},
-  {baht:1060, hearts:2130, tickets:213/6},
-  {baht:1760, hearts:3550, tickets:709/12},
-  {baht:3390, hearts:7050, tickets:117.5},
+  {baht:15,   hearts:20,   tickets:2},
+  {baht:35,   hearts:60,   tickets:6},
+  {baht:169,  hearts:320,  tickets:32},
+  {baht:369,  hearts:730,  tickets:73},
+  {baht:699,  hearts:1370, tickets:137},
+  {baht:1060, hearts:2130, tickets:213},
+  {baht:1760, hearts:3550, tickets:355},
+  {baht:3390, hearts:7050, tickets:705},
 ];
-// 1 ticket = 60 hearts
+// 1 ticket = 10 hearts
 
 // ── Buy with budget: greedy best value ──
 function buyWithBudget(budget) {
@@ -193,7 +191,7 @@ const GRAFFITI_CUMCOST = GRAFFITI_COST.reduce((acc,v,i) => {acc.push((acc[i-1]||
 // P(special at draw k) = 1/(11-k) theoretically for uniform box
 // cumulative prob of getting special by draw k = k/10
 const GRAFFITI_TOTAL = 10;
-const GRAFFITI_RARE_COUNT = 5; // Rare Treasure per box (Unconventional or Uninhibited)
+const GRAFFITI_RARE_COUNT = 7; // Rare items per box
 const GRAFFITI_NORMAL_COUNT = 3;
 
 function graffitiAnalysis(tickets) {
@@ -232,7 +230,7 @@ function graffitiAnalysis(tickets) {
 const RAINDROP_COST = [30, 60, 90, 120, 150, 190, 230, 270, 310, 350, 390, 430];
 const RAINDROP_TOTAL = 12;
 const RAINDROP_CUMCOST = RAINDROP_COST.reduce((acc,v,i)=>{acc.push((acc[i-1]||0)+v);return acc;},[]);
-const RAINDROP_PREMIUM_COUNT = 7; // Moonlight Premium (ของทอง)
+const RAINDROP_PREMIUM_COUNT = 8; // Rare items per box
 const RAINDROP_NORMAL_COUNT = 4;
 
 function raindropAnalysis(hearts) {
@@ -274,43 +272,53 @@ function bigBoxAnalysis(tickets, box) {
   const ticketsUsed = totalPulls * BIG_TICKET_COST;
   const ticketsLeft = tickets - ticketsUsed;
 
-  // Expected Rare count using pity system
-  // First 10: guaranteed 1 Rare at pull 10, plus random before
-  // After: every 25 guaranteed (unobtained)
-  // Simplification: E[Rare per 25 pulls] >= 1 (guaranteed) + random extras
-  // E[Rare] = pulls * rareRate (raw) but floor at guarantees
-  // More accurate: in 25 pulls with 5% rate, E[natural] = 25*0.05 = 1.25, but guaranteed >=1
-  const expectedRareRaw = totalPulls * box.rareRate;
-  // guarantee floor: at least 1 per guarantee2 pulls after first 10
-  const guaranteeFloor = totalPulls >= box.guarantee1 ? 1 + Math.floor((totalPulls - box.guarantee1) / box.guarantee2) : 0;
-  const expectedRare = Math.max(expectedRareRaw, guaranteeFloor);
+  // ── คำนวณ expectedRare โดยจำลอง pity แบบถูกต้อง ──
+  // Pity rule:
+  //   - 10 pull แรก: การันตี Rare ≥ 1
+  //   - หลังจากนั้น: การันตีทุก 25 pull
+  //   - ออก Rare ใหม่ (ไม่ซ้ำ) → pity รีเซ็ต
+  //   - ออก Rare ซ้ำ → pity นับต่อ
+  // สูตร E[Rare ใน N pull] คำนวณต่อช่วง pity:
+  //   ช่วงแรก (10 pull): E[natural] = 10*rate, guaranteed ≥ 1 → E = max(10*rate, 1) ≈ 1 (rate=5%)
+  //   ช่วงถัดไป (25 pull each): E[natural] = 25*rate = 1.25, guaranteed ≥ 1 → E ≈ 1.25
+  // แต่ Rare ซ้ำทำให้ pity ไม่รีเซ็ต → ช่วง pity จริงๆ สั้นลงถ้าโชคดี ยาวขึ้นถ้าซ้ำ
+  // ใช้ E[Rare] = pulls * rareRate (natural) + pity guarantee (lower bound)
+  const expectedRareNatural = totalPulls * box.rareRate;
+  // pity guarantee: อย่างน้อย 1 ใน 10 pull แรก + 1 ทุก 25 pull หลังจากนั้น
+  const guaranteeFloor = totalPulls >= box.guarantee1
+    ? 1 + Math.floor((totalPulls - box.guarantee1) / box.guarantee2)
+    : 0;
+  // E[Rare] จริงๆ อยู่ระหว่าง natural กับ guarantee (pity ซ้ำทำให้ใกล้ natural มากกว่า)
+  // ใช้ค่าเฉลี่ยถ่วงน้ำหนัก: ถ้า natural > guarantee ใช้ natural, ถ้าต่ำกว่าใช้ guarantee
+  const expectedRare = Math.max(expectedRareNatural, guaranteeFloor);
 
-  // Rainbow vs Gold split
+  // ── unique Rare ที่คาดว่าได้ (Coupon Collector) ──
+  // E[unique จาก N draws กับ K items] = K * (1 - ((K-1)/K)^N)
+  const K = box.rareCount;
+  const expectedUniqueRare = K * (1 - Math.pow((K - 1) / K, Math.round(expectedRare)));
+
+  // Rainbow vs Gold split (จาก unique rare ที่ได้)
   const rainbowFrac = box.rainbowCount / box.rareCount;
   const goldFrac    = box.goldCount    / box.rareCount;
-  const expectedRainbow = expectedRare * rainbowFrac;
-  const expectedGold    = expectedRare * goldFrac;
+  const expectedRainbow = expectedUniqueRare * rainbowFrac;
+  const expectedGold    = expectedUniqueRare * goldFrac;
 
-  // P(at least 1 rainbow) — each Rare has rainbowFrac chance of being rainbow
-  // P(no rainbow in N rares) = (goldFrac)^N  →  P(at least 1) = 1 - (goldFrac)^N
-  const probAtLeast1Rainbow = expectedRare > 0
-    ? 1 - Math.pow(1 - rainbowFrac, Math.max(1, Math.round(expectedRare)))
-    : 0;
-
-  // P(at least 1 rainbow) from raw pulls perspective (each pull: P(rainbow) = rareRate * rainbowFrac)
+  // P(ได้ rainbow ≥ 1) จาก pull perspective
   const rainbowPerPull = box.rareRate * rainbowFrac;
   const probRainbowFromPulls = 1 - Math.pow(1 - rainbowPerPull, totalPulls);
 
-  // guarantee info
-  const pityAfter10 = totalPulls >= box.guarantee1 ? Math.floor((totalPulls - box.guarantee1) / box.guarantee2) : 0;
+  // pity guarantee info
+  const pityAfter10 = totalPulls >= box.guarantee1
+    ? Math.floor((totalPulls - box.guarantee1) / box.guarantee2)
+    : 0;
 
-  // pulls needed to guarantee at least 1 rainbow (worst case: all garanteed rares are gold)
-  // with guarantee every 25, rainbow guaranteed after: guarantee1 + goldCount * guarantee2 pulls (worst case)
+  // worst case pulls ถึงการันตี rainbow (gold ทั้งหมดออกก่อน + ซ้ำทุกครั้ง)
+  // worst: pity ไม่รีเซ็ต (ซ้ำหมด) จนกว่าจะออก rainbow → guarantee2 * goldCount + guarantee1
   const pullsToGuarRainbow = box.guarantee1 + box.goldCount * box.guarantee2;
 
   return {totalPulls, rounds10, extraPulls, ticketsUsed, ticketsLeft,
-    expectedRare, expectedRainbow, expectedGold,
-    probAtLeast1Rainbow, probRainbowFromPulls, pullsToGuarRainbow,
+    expectedRare, expectedUniqueRare, expectedRainbow, expectedGold,
+    probRainbowFromPulls, pullsToGuarRainbow,
     pityAfter10, guaranteeFloor};
 }
 
@@ -351,7 +359,7 @@ function calc() {
     <div class="cur-card">
       <div class="top"><span class="ico">💜</span><span class="name">หัวใจที่ได้รับ</span></div>
       <div class="amount" style="color:var(--teal)">${fmt(totalHearts)}</div>
-      <div class="sub">≈ ${(totalTickets).toFixed(2)} ตั๋ว (1 ตั๋ว = 60 ใจ)</div>
+      <div class="sub">≈ ${(totalTickets).toFixed(0)} ตั๋ว (1 ตั๋ว = 10 ใจ)</div>
     </div>
     <div class="cur-card">
       <div class="top"><span class="ico">🎟️</span><span class="name">ตั๋วที่ได้รับ</span></div>
@@ -426,7 +434,8 @@ function calc() {
 
       ${row('การันตี Rare ครั้งแรก', b.totalPulls >= box.guarantee1 ? `✓ pull ที่ ${box.guarantee1}` : `ยังไม่ถึง (ต้องการ ${box.guarantee1} pull)`, b.totalPulls >= box.guarantee1 ? 'good' : 'muted')}
       ${b.pityAfter10 > 0 ? row('การันตีจากปิตี้ (ทุก 25 pull)', `+${b.pityAfter10} ครั้ง`, 'good') : ''}
-      ${row('คาดได้ Rare ทั้งหมด', `~${fmt(b.expectedRare,1)} ชิ้น`, 'accent')}
+      ${row('คาดได้ Rare ทั้งหมด', `~${fmt(b.expectedRare,1)} ครั้ง`, 'accent')}
+      ${row('คาดได้ Rare ไม่ซ้ำ', `~${fmt(b.expectedUniqueRare,1)} / ${b.totalPulls >= 0 ? box.rareCount : '?'} ชิ้น`, b.expectedUniqueRare >= box.rareCount * 0.8 ? 'good' : 'warn')}
 
       <div style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:10px;padding:.7rem .9rem;margin:.6rem 0">
         <div style="font-size:.72rem;color:var(--green);font-family:var(--font-mono);letter-spacing:.05em;margin-bottom:.5rem">🌈 RAINBOW RARE — ของที่อยากได้มากสุด</div>
