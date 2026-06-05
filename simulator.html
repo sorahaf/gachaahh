@@ -16,8 +16,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font-family:var(--font-th);min-height:100vh}
 body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:radial-gradient(800px at 20% 30%,rgba(124,106,247,.05),transparent 60%),
-             radial-gradient(600px at 80% 70%,rgba(247,162,106,.04),transparent 60%)}
+  background:radial-gradient(800px at 20% 30%,rgba(124,106,247,.05),transparent 10%),
+             radial-gradient(600px at 80% 70%,rgba(247,162,106,.04),transparent 10%)}
 
 .wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:1.5rem 1rem 4rem}
 
@@ -337,7 +337,7 @@ const BOXES = {
     bonuses: [
       { atPull: 15,  reward: 30,  rewardUnit: 'ตั๋ว' },
       { atPull: 50,  reward: 30,  rewardUnit: 'ตั๋ว' },
-      { atPull: 100, reward: 60,  rewardUnit: 'ตั๋ว' },
+      { atPull: 100, reward: 10,  rewardUnit: 'ตั๋ว' },
     ],
     // items ถูก override จาก BIG_SUB_BOXES ตาม subBox ที่เลือก
     items: { rare: BIG_SUB_BOXES.female.items.rare.map(r=>r.name), common: BIG_SUB_BOXES.female.items.common }
@@ -381,7 +381,7 @@ const BOXES = {
   },
   raindrop: {
     name: 'เรนดรอป', icon: '🌧️', currency: 'หัวใจ', currencyIcon: '💜',
-    heartsPerPull: [30, 60, 90, 120, 150, 190, 230, 270, 310, 350, 390, 430],
+    heartsPerPull: [30, 10, 90, 120, 150, 190, 230, 270, 310, 350, 390, 430],
     luckyAll: true,
     subBoxes: {
       limpid: {
@@ -788,7 +788,7 @@ function renderStageEmpty() {
 
 function renderHistory() {
   const st = getSubState(currentBox);
-  document.getElementById('hist-row').innerHTML = st.history.slice(-60).reverse().map(h => {
+  document.getElementById('hist-row').innerHTML = st.history.slice(-10).reverse().map(h => {
     if (h.bonus) return `<span class="hist-pill bonus">${h.name}</span>`;
     return `<span class="hist-pill ${h.rare ? 'rare' : 'common'}">${h.luckyAll ? '🏆ALL' : h.name}</span>`;
   }).join('');
