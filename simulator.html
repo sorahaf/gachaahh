@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎰 Gacha Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d0f14; --surface:#151820; --surface2:#1c2030; --border:#2a3045;
+  --accent:#7c6af7; --accent2:#f7a26a; --green:#4ade80; --yellow:#fbbf24;
+  --orange:#f97316; --red:#f87171; --teal:#2dd4bf; --pink:#f472b6;
+  --text:#e8eaf0; --muted:#7a839a;
+  --font-th:'Noto Sans Thai',sans-serif; --font-mono:'Space Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-th);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(800px at 20% 30%,rgba(124,106,247,.05),transparent 60%),
+             radial-gradient(600px at 80% 70%,rgba(247,162,106,.04),transparent 60%)}
+
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:1.5rem 1rem 4rem}
+
+/* nav */
+.nav{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem}
+.back{background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:.4rem .9rem;color:var(--muted);font-family:var(--font-th);font-size:.83rem;
+  cursor:pointer;text-decoration:none;transition:border-color .2s}
+.back:hover{border-color:var(--accent);color:var(--text)}
+.nav h1{font-family:var(--font-mono);font-size:1.1rem;color:var(--accent)}
+
+/* box selector */
+.box-sel{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-bottom:1.5rem}
+.box-btn{background:var(--surface);border:2px solid var(--border);border-radius:12px;
+  padding:1rem .7rem;text-align:center;cursor:pointer;transition:all .2s}
+.box-btn:hover{border-color:var(--accent)}
+.box-btn.active{border-color:var(--accent);background:rgba(124,106,247,.08)}
+.box-btn .ico{font-size:1.8rem;margin-bottom:.3rem}
+.box-btn .nm{font-size:.85rem;font-weight:500}
+.box-btn .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+
+/* pity / currency bar */
+.info-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.6rem;margin-bottom:1.25rem}
+.info-chip{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  padding:.7rem 1rem;text-align:center}
+.info-chip .v{font-family:var(--font-mono);font-size:1.25rem;font-weight:700;color:var(--accent)}
+.info-chip .l{font-size:.72rem;color:var(--muted);margin-top:1px}
+.info-chip.warn .v{color:var(--yellow)}
+.info-chip.good .v{color:var(--green)}
+
+/* pull buttons */
+.pull-area{display:flex;gap:.75rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.pull-btn{flex:1;min-width:140px;padding:.8rem 1.2rem;border:none;border-radius:12px;
+  font-family:var(--font-th);font-size:.95rem;font-weight:700;cursor:pointer;
+  transition:all .15s;position:relative;overflow:hidden}
+.pull-btn:active{transform:scale(.97)}
+.pull1{background:linear-gradient(135deg,#3d5af1,#7c6af7);color:#fff}
+.pull10{background:linear-gradient(135deg,#c55a11,#f7a26a);color:#fff}
+.pull-btn:disabled{opacity:.4;cursor:not-allowed}
+.cost-tag{font-size:.73rem;opacity:.85;margin-top:2px;display:block}
+
+/* result stage */
+.stage{min-height:200px;background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:1.25rem;margin-bottom:1.25rem;position:relative;overflow:hidden}
+.stage-empty{display:flex;align-items:center;justify-content:center;height:160px;
+  color:var(--muted);font-size:.9rem}
+
+/* card grid */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:.6rem}
+.item-card{border-radius:10px;padding:.5rem .3rem;text-align:center;
+  animation:popIn .25s ease both;position:relative}
+.item-card.rare{background:linear-gradient(135deg,rgba(247,162,106,.2),rgba(251,191,36,.15));
+  border:1px solid rgba(247,162,106,.4)}
+.item-card.common{background:var(--surface2);border:1px solid var(--border)}
+.item-card img{width:56px;height:56px;object-fit:contain;border-radius:8px;display:block;margin:0 auto .3rem}
+.item-card .img-placeholder{width:56px;height:56px;border-radius:8px;display:flex;
+  align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto .3rem}
+.item-card.rare .img-placeholder{background:rgba(247,162,106,.15)}
+.item-card.common .img-placeholder{background:rgba(124,106,247,.1)}
+.item-card .iname{font-size:.65rem;color:var(--muted);line-height:1.2}
+.item-card .rare-star{position:absolute;top:4px;right:4px;font-size:.65rem;color:var(--yellow)}
+@keyframes popIn{from{transform:scale(.5) translateY(10px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+
+/* single pull animation overlay */
+.pull-anim{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--surface);z-index:10;border-radius:16px}
+.pull-anim.hidden{display:none}
+.anim-card{width:120px;height:160px;border-radius:16px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:.5rem;animation:revealCard .5s ease}
+.anim-card.rare{background:linear-gradient(135deg,#f7a26a33,#fbbf2422);border:2px solid var(--yellow)}
+.anim-card.common{background:var(--surface2);border:2px solid var(--border)}
+.anim-card img{width:72px;height:72px;object-fit:contain}
+.anim-card .anim-placeholder{width:72px;height:72px;border-radius:12px;display:flex;
+  align-items:center;justify-content:center;font-size:2.5rem}
+.anim-card .anim-name{font-size:.8rem;text-align:center;padding:0 .4rem}
+.anim-card .anim-type{font-size:.7rem;color:var(--muted)}
+@keyframes revealCard{from{transform:rotateY(90deg) scale(.8);opacity:0}to{transform:rotateY(0) scale(1);opacity:1}}
+
+/* bonus toast */
+.bonus-toast{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#fbbf24,#f7a26a);color:#1a1000;
+  padding:.6rem 1.4rem;border-radius:30px;font-weight:700;font-size:.9rem;
+  z-index:100;animation:toastIn .4s ease;box-shadow:0 4px 20px rgba(251,191,36,.4)}
+.bonus-toast.hidden{display:none}
+@keyframes toastIn{from{top:-.5rem;opacity:0}to{top:1.5rem;opacity:1}}
+
+/* image manager */
+.img-manager{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.img-manager summary{cursor:pointer;font-size:.85rem;color:var(--muted);font-family:var(--font-mono);letter-spacing:.05em;text-transform:uppercase}
+.img-manager summary:hover{color:var(--text)}
+.img-tabs{display:flex;gap:4px;margin:1rem 0 .75rem}
+.img-tab{padding:.35rem .8rem;border:1px solid var(--border);border-radius:6px;
+  background:transparent;color:var(--muted);font-size:.8rem;cursor:pointer;font-family:var(--font-th)}
+.img-tab.active{background:var(--surface2);color:var(--text);border-color:var(--accent)}
+.item-img-row{display:flex;align-items:center;gap:.7rem;padding:.5rem 0;border-bottom:1px solid rgba(42,48,69,.5)}
+.item-img-row:last-child{border-bottom:none}
+.item-img-preview{width:40px;height:40px;border-radius:8px;object-fit:contain;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.item-img-name{flex:1;font-size:.83rem}
+.item-img-input{flex:2;background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  padding:.3rem .6rem;color:var(--text);font-size:.78rem;font-family:var(--font-mono)}
+.item-img-input:focus{outline:none;border-color:var(--accent)}
+.img-upload-btn{background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+  padding:.3rem .6rem;color:var(--muted);font-size:.75rem;cursor:pointer;white-space:nowrap}
+.img-upload-btn:hover{border-color:var(--accent);color:var(--text)}
+
+/* history */
+.history-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem}
+.history-bar summary{cursor:pointer;font-size:.83rem;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;letter-spacing:.05em}
+.hist-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.75rem;max-height:120px;overflow-y:auto}
+.hist-pill{padding:2px 10px;border-radius:20px;font-size:.72rem;font-family:var(--font-mono)}
+.hist-pill.rare{background:rgba(247,162,106,.15);color:var(--accent2)}
+.hist-pill.common{background:var(--surface2);color:var(--muted)}
+.hist-pill.bonus{background:rgba(251,191,36,.2);color:var(--yellow)}
+
+.reset-btn{background:transparent;border:1px solid var(--border);border-radius:8px;
+  padding:.4rem .9rem;color:var(--muted);font-size:.8rem;cursor:pointer;margin-top:.75rem}
+.reset-btn:hover{border-color:var(--red);color:var(--red)}
+
+.sub-btn{padding:.4rem .9rem;border:1px solid var(--border);border-radius:20px;background:var(--surface);
+  color:var(--muted);font-size:.8rem;cursor:pointer;font-family:var(--font-th);transition:all .2s}
+.sub-btn:hover{border-color:var(--accent);color:var(--text)}
+.sub-btn.active{background:rgba(124,106,247,.12);border-color:var(--accent);color:var(--text);font-weight:600}
+
+@media(max-width:500px){
+  .box-sel{grid-template-columns:1fr 1fr}
+  .card-grid{grid-template-columns:repeat(auto-fill,minmax(68px,1fr))}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="nav">
+  <a class="back" href="index.html">← หน้าหลัก</a>
+  <h1>🎰 Gacha Simulator</h1>
+</div>
+
+<!-- Box selector -->
+<div class="box-sel">
+  <div class="box-btn active" onclick="selectBox('big',this)">
+    <div class="ico">🏛️</div>
+    <div class="nm">ตู้ใหญ่</div>
+    <div class="sub">ชุดหญิง/ชุดชาย/บ้าน</div>
+  </div>
+  <div class="box-btn" onclick="selectBox('graffiti',this)">
+    <div class="ico">🎨</div>
+    <div class="nm">กราฟฟิตี้</div>
+    <div class="sub">ตั๋ว · 10 Rare</div>
+  </div>
+  <div class="box-btn" onclick="selectBox('raindrop',this)">
+    <div class="ico">🌧️</div>
+    <div class="nm">เรนดรอป</div>
+    <div class="sub">หัวใจ · 12 Rare</div>
+  </div>
+</div>
+
+<!-- Sub-box selector (shown when box has sub variants) -->
+<div id="sub-box-sel" style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap"></div>
+
+<!-- Info bar -->
+<div class="info-bar" id="info-bar"></div>
+
+<!-- Pull buttons -->
+<div class="pull-area">
+  <button class="pull-btn pull1" onclick="doPull(1)" id="btn1">
+    🎲 Pull 1 ครั้ง
+    <span class="cost-tag" id="cost1"></span>
+  </button>
+  <button class="pull-btn pull10" onclick="doPull(10)" id="btn10">
+    🎰 Pull 10 ครั้ง
+    <span class="cost-tag" id="cost10"></span>
+  </button>
+</div>
+
+<!-- Stage -->
+<div class="stage" id="stage">
+  <div class="pull-anim hidden" id="pull-anim">
+    <div class="anim-card" id="anim-card">
+      <div class="anim-placeholder" id="anim-img">🎁</div>
+      <div class="anim-name" id="anim-name">?</div>
+      <div class="anim-type" id="anim-type"></div>
+    </div>
+  </div>
+  <div class="stage-empty" id="stage-empty">กด Pull เพื่อเริ่มสุ่ม ✨</div>
+  <div class="card-grid" id="card-grid" style="display:none"></div>
+</div>
+
+<!-- Bonus toast -->
+<div class="bonus-toast hidden" id="bonus-toast">🎉 ได้รับโบนัส!</div>
+
+<!-- Image manager -->
+<details class="img-manager">
+  <summary>🖼️ จัดการภาพไอเทม</summary>
+  <div class="img-tabs">
+    <button class="img-tab active" onclick="switchImgTab('big',this)">🏛️ ตู้ใหญ่</button>
+    <button class="img-tab" onclick="switchImgTab('graffiti',this)">🎨 กราฟฟิตี้</button>
+    <button class="img-tab" onclick="switchImgTab('raindrop',this)">🌧️ เรนดรอป</button>
+  </div>
+  <div id="img-list"></div>
+</details>
+
+<!-- History -->
+<details class="history-bar" style="margin-top:.75rem">
+  <summary>📜 ประวัติการสุ่ม</summary>
+  <div class="hist-row" id="hist-row"></div>
+  <button class="reset-btn" onclick="resetAll()">🔄 รีเซ็ตทั้งหมด</button>
+</details>
+
+</div><!-- /wrap -->
+
+<script>
+// ══════════════════════════════════════════
+// DATA CONFIG — แก้ได้ตามแพทช์
+// ══════════════════════════════════════════
+
+// ตู้ใหญ่แบ่งเป็น 3 sub-box ใส่ข้อมูลนี้เพื่ออัปเดตแพทช์
+const BIG_SUB_BOXES = {
+  female: {
+    label: '👗 ชุดหญิง',
+    name: 'Golden Mirage (Seer)',
+    rareRate: 0.05,
+    items: {
+      // ป้าย รุ้ง = rainbow, ทอง = gold (ลำดับจาก Excel)
+      rare: [
+        { name: 'Flowing Shadow Winged Cape',     tag: '🌈' },
+        { name: 'Seer Feathered Pibo Clothes',    tag: '🌈' },
+        { name: 'Blossom Rattle',                 tag: '🌈' },
+        { name: 'Sacred Hime Cut Twin Braids',    tag: '🌈' },
+        { name: 'Bountiful Chain Shoes',          tag: '🌈' },
+        { name: 'Seer Tassel Veil',               tag: '🥇' },
+        { name: 'Seer Feather Drape Pants',       tag: '🥇' },
+        { name: 'Seer Feather Crown',             tag: '🥇' },
+        { name: 'Seer Misty Veil Bandana',        tag: '🥇' },
+        { name: 'Prophecy',                       tag: '🥇' },
+        { name: 'Gold Sand Flower Vine Watering Can', tag: '🥇' },
+      ],
+      common: [
+        'Blessing Feather Earrings','Crossbody Knotted Twig','Gold Sand Twig Face Chain',
+        'Seer Crescent Saber','Gold Sand Twig & Bead Bracelet',"Seer's Attendant",
+        'Serpent Choker','Gold Sand Flower Long Gloves','Gold Sand Tassel Leg Chain',
+        'Blazing Phoenix Eyes','Soft Straight Eyebrows','Sandscale',
+      ]
+    }
+  },
+  male: {
+    label: '👔 ชุดชาย',
+    name: 'Golden Mirage (Traveler)',
+    rareRate: 0.05,
+    items: {
+      rare: [
+        { name: 'Gold Sand Drift Traveler Hat',    tag: '🌈' },
+        { name: 'Gold Sand Travel Cape',           tag: '🌈' },
+        { name: 'Wilderness Flow Medium-Length Hair', tag: '🌈' },
+        { name: 'Echoing Bow',                     tag: '🌈' },
+        { name: 'Bird Call Lyre',                  tag: '🌈' },
+        { name: 'Traveler Slant Hem Shorts',       tag: '🥇' },
+        { name: 'Screaming Mandrake',              tag: '🥇' },
+        { name: "Traveler's Detector",             tag: '🥇' },
+        { name: 'Traveler Expedition Backpack',    tag: '🥇' },
+        { name: 'Traveler Buckle Leather Boots',   tag: '🥇' },
+        { name: 'Obscurity',                       tag: '🥇' },
+      ],
+      common: [
+        'Traveler Strapped Arm Warmers','Crossbody Leather Watering Can','Gold Sand Oracle Mask',
+        'Traveler Echo Socks','Ink-and-Notes Waist Bag','Leaf Vein Mask',
+        'Gold Sand Noble Attire',"Traveler's Diary",'Traveler Strap Long Gloves',
+        'Twig Horns','Piercing Phoenix Eyes','Resolute Eyebrow Slit',
+      ]
+    }
+  },
+  house: {
+    label: '🏠 บ้าน',
+    name: 'Golden Mirage (Oasis)',
+    rareRate: 0.043,
+    items: {
+      rare: [
+        { name: 'Gold Sand Draped Lounge Couch',     tag: '🌈' },
+        { name: 'Gold Sand Lattice Alcove Couch',    tag: '🌈' },
+        { name: 'Gold Sand Silk Canopy Spice Boat',  tag: '🌈' },
+        { name: 'Gold Sand Brocade Loom',            tag: '🌈' },
+        { name: 'Oasis Lattice Square Pool',         tag: '🌈' },
+        { name: 'Oasis Arched Flower Walkway',       tag: '🌈' },
+        { name: 'Oasis Lattice Quartered Pool',      tag: '🌈' },
+        { name: 'Gold Sand Tower Archway',           tag: '🌈' },
+        { name: 'Gold Sand Canopy Pendant Lamp',     tag: '🥇' },
+        { name: 'Oasis Coffee Tent',                 tag: '🥇' },
+        { name: 'Gold Sand Instrument Stall',        tag: '🥇' },
+        { name: 'Gold Sand Large Fountain',          tag: '🥇' },
+        { name: 'Desert Fan Palm',                   tag: '🥇' },
+        { name: 'Gold Sand Argyle Dome',             tag: '🥇' },
+        { name: 'Gold Sand Draped Bay Window',       tag: '🥇' },
+      ],
+      common: [
+        'Hexagonal Medallion Rug','Silk Colored Light Stand','Gold Sand Floor Cushion Set',
+        'Gold Sand Plant Pendant Lamp','Tassel Knotted Hammock','Mosaic Glass Floor Lamp',
+        'Pointed Draped Vanity Mirror','Gold Sand Octagonal Table','Gold Sand Woven Hanging Decor',
+        'Oasis Terracotta Pot','Gold Sand Camel Statue','Gold Sand Floor Cushion',
+        'Terracotta String Lights','Gold Sand Teapot Set','Gold Sand Quartered Balcony',
+        'Brocade Canopy','Oasis Lattice Pointed Window','Oasis Pointed Double Door',
+        'Oasis Lattice Hinged Door','Oasis Patterned Pointed Archway','Paper Flower',
+        'Gold Sand Double-Pendant Wall Lamp','Gold Sand Short Handrail','Gold Sand Short Stairs',
+        'Gold Sand Patterned Flooring','Gold Sand Argyle Wallpaper','Gold Sand Wall',
+        'Gold Sand Octagram Fence','Gold Sand Argyle Wall','Cactus',
+      ]
+    }
+  }
+};
+
+const BOXES = {
+  big: {
+    name: 'ตู้ใหญ่', icon: '🏛️', currency: 'ตั๋ว', currencyIcon: '🎟️',
+    // rareRate ถูก override จาก BIG_SUB_BOXES ตาม subBox ที่เลือก
+    rareRate: 0.05,
+    guarantee1: 10,   // pull ที่ 1–10 การันตี Rare อย่างน้อย 1 ครั้ง (ต้องออกภายใน 10 pull แรก)
+    guarantee2: 25,   // หลังจากนั้นการันตีทุก 25 pull
+    costPerPull: 6,
+    bonuses: [
+      { atPull: 15,  reward: 30,  rewardUnit: 'ตั๋ว' },
+      { atPull: 50,  reward: 30,  rewardUnit: 'ตั๋ว' },
+      { atPull: 100, reward: 60,  rewardUnit: 'ตั๋ว' },
+    ],
+    // items ถูก override จาก BIG_SUB_BOXES ตาม subBox ที่เลือก
+    items: { rare: BIG_SUB_BOXES.female.items.rare.map(r=>r.name), common: BIG_SUB_BOXES.female.items.common }
+  },
+  graffiti: {
+    name: 'กราฟฟิตี้', icon: '🎨', currency: 'ตั๋ว', currencyIcon: '🎟️',
+    ticketsPerPull: [3, 9, 15, 21, 27, 33, 39, 45, 45, 45],
+    luckyAll: true,
+    // sub-variant: Unconventional (ชุดหญิง) / Uninhibited (ชุดชาย)
+    subBoxes: {
+      female: {
+        label: '👗 Unconventional',
+        name: 'Graffiti Channel (Unconventional)',
+        items: {
+          rare: ['Graffiti Buckle Jumpsuit (Special)','Graffiti Wing Drawstring Bag',
+                 'Graffiti Woven Bandana Cap','Graffiti Braids w/ Colored Ropes',
+                 'Unconventional Headphones','Graffiti Spray Can',
+                 'Unconventional Outdoor Running Shoes'],
+          common: ['Graffiti Chain Eye Protector','Graffiti Protective Gloves','Graffiti Striped Asym Socks']
+        }
+      },
+      male: {
+        label: '👔 Uninhibited',
+        name: 'Graffiti Channel (Uninhibited)',
+        items: {
+          rare: ['Graffiti Drawstring Jacket (Special)','Graffiti Demon Cargo Pants',
+                 'Graffiti Demon Headband','Uninhibited Spiky Short Hair',
+                 'Graffiti Crossbody Tool Bag','Uninhibited Buckle Sports Shoes',
+                 'Graffiti Spray Can Waist Bag'],
+          common: ['Demon Spray Toy','Demon Square Glasses','Star Patch & Eyebrow Piercing']
+        }
+      }
+    },
+    items: {
+      rare: ['Graffiti Buckle Jumpsuit (Special)','Graffiti Wing Drawstring Bag',
+             'Graffiti Woven Bandana Cap','Graffiti Braids w/ Colored Ropes',
+             'Unconventional Headphones','Graffiti Spray Can',
+             'Unconventional Outdoor Running Shoes'],
+      common: ['Graffiti Chain Eye Protector','Graffiti Protective Gloves','Graffiti Striped Asym Socks']
+    }
+  },
+  raindrop: {
+    name: 'เรนดรอป', icon: '🌧️', currency: 'หัวใจ', currencyIcon: '💜',
+    heartsPerPull: [30, 60, 90, 120, 150, 190, 230, 270, 310, 350, 390, 430],
+    luckyAll: true,
+    subBoxes: {
+      limpid: {
+        label: '🪼 Limpid',
+        name: 'Raindrop Song (Limpid)',
+        items: {
+          rare: ['Light Jellyfish Dress (Special)','Light Jellyfish Rain Hat',
+                 'Playful Spiral Curls','Teardrop Bellflower Umbrella',
+                 'Jellyfish Sun Hat w/ Bow','Light Jellyfish Backpack',
+                 'Light Jellyfish Gloves','Fish Raindrop Rain Boots'],
+          common: ['Cyperus Jellyfish Headwear','Little Raindrop','Light Jellyfish Earrings','Rainbow Cloud Motif']
+        }
+      },
+      drift: {
+        label: '🐟 Drift',
+        name: 'Raindrop Song (Drift)',
+        items: {
+          rare: ['Drift Manta Ray Cape Outfit (Special)','Manta Ray Rain Hat',
+                 'Flowing Seaweed Curls','Teardrop Leaf Umbrella',
+                 'Raindrop Rainforest Backpack','Dragonfly Lotus Hat',
+                 'Rainforest Creature Crossbody Bag','Drift Rain Boots'],
+          common: ['Dragonfly Bracelet','Leaves Headwear','Cumulonimbus Glasses','Raindrop Rainforest Asym Socks']
+        }
+      }
+    },
+    items: {
+      rare: ['Light Jellyfish Dress (Special)','Light Jellyfish Rain Hat',
+             'Playful Spiral Curls','Teardrop Bellflower Umbrella',
+             'Jellyfish Sun Hat w/ Bow','Light Jellyfish Backpack',
+             'Light Jellyfish Gloves','Fish Raindrop Rain Boots'],
+      common: ['Cyperus Jellyfish Headwear','Little Raindrop','Light Jellyfish Earrings','Rainbow Cloud Motif']
+    }
+  }
+};
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let state = loadState();
+let currentBox = 'big';
+let currentSubBox = { big: 'female', graffiti: 'female', raindrop: 'limpid' };
+// images: {boxId: {subBox: {itemName: url}}}
+let images = JSON.parse(localStorage.getItem('gacha_images') || '{}');
+
+function loadState() {
+  try { return JSON.parse(localStorage.getItem('gacha_sim_state') || 'null') || freshState(); }
+  catch { return freshState(); }
+}
+function freshState() {
+  return {
+    big:      { pulls: 0, pullsSinceRare: 0, totalCurrency: 0, bonusEarned: [], history: [], gotRares: new Set(),
+                female: { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set() },
+                male:   { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set() },
+                house:  { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set() }
+              },
+    graffiti: { pulls: 0, totalCurrency: 0, history: [], gotAll: false,
+                female: { pulls:0, totalCurrency:0, history:[], gotAll:false },
+                male:   { pulls:0, totalCurrency:0, history:[], gotAll:false }
+              },
+    raindrop: { pulls: 0, totalCurrency: 0, history: [], gotAll: false,
+                limpid: { pulls:0, totalCurrency:0, history:[], gotAll:false },
+                drift:  { pulls:0, totalCurrency:0, history:[], gotAll:false }
+              }
+  };
+}
+function saveState() {
+  // Sets aren't serializable directly
+  const s = JSON.parse(JSON.stringify(state, (k, v) => v instanceof Set ? [...v] : v));
+  localStorage.setItem('gacha_sim_state', JSON.stringify(s));
+}
+
+// ══════════════════════════════════════════
+// HELPERS — get active sub-box data
+// ══════════════════════════════════════════
+function getSubData(boxId) {
+  const box = BOXES[boxId];
+  const sub = currentSubBox[boxId];
+  if (boxId === 'big') {
+    const s = BIG_SUB_BOXES[sub];
+    return {
+      rareRate: s.rareRate,
+      items: { rare: s.items.rare.map(r => r.name), rareObjs: s.items.rare, common: s.items.common }
+    };
+  }
+  if (box.subBoxes && sub && box.subBoxes[sub]) {
+    return { items: box.subBoxes[sub].items };
+  }
+  return { items: box.items };
+}
+
+function getSubState(boxId) {
+  const sub = currentSubBox[boxId];
+  if (sub && state[boxId][sub]) return state[boxId][sub];
+  return state[boxId]; // fallback
+}
+
+// ══════════════════════════════════════════
+// BOX SELECTION
+// ══════════════════════════════════════════
+function selectBox(id, el) {
+  currentBox = id;
+  document.querySelectorAll('.box-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderSubBoxSel();
+  syncBoxItems();
+  renderInfoBar();
+  renderStageEmpty();
+  updateCostTags();
+}
+
+function selectSubBox(sub) {
+  currentSubBox[currentBox] = sub;
+  document.querySelectorAll('.sub-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.sub === sub);
+  });
+  syncBoxItems();
+  renderInfoBar();
+  renderStageEmpty();
+  updateCostTags();
+  renderImgList();
+}
+
+function renderSubBoxSel() {
+  const el = document.getElementById('sub-box-sel');
+  if (currentBox === 'big') {
+    el.innerHTML = Object.entries(BIG_SUB_BOXES).map(([key, s]) =>
+      `<button class="sub-btn ${currentSubBox.big===key?'active':''}" data-sub="${key}" onclick="selectSubBox('${key}')">${s.label}</button>`
+    ).join('');
+  } else if (BOXES[currentBox].subBoxes) {
+    el.innerHTML = Object.entries(BOXES[currentBox].subBoxes).map(([key, s]) =>
+      `<button class="sub-btn ${currentSubBox[currentBox]===key?'active':''}" data-sub="${key}" onclick="selectSubBox('${key}')">${s.label}</button>`
+    ).join('');
+  } else {
+    el.innerHTML = '';
+  }
+}
+
+function syncBoxItems() {
+  // อัปเดต BOXES[boxId].items ให้ตรงกับ sub ที่เลือก
+  const d = getSubData(currentBox);
+  BOXES[currentBox].items = d.items;
+  if (currentBox === 'big') BOXES.big.rareRate = d.rareRate;
+}
+
+// ══════════════════════════════════════════
+// COST TAGS
+// ══════════════════════════════════════════
+function getCostForPull(boxId, pullNum) {
+  const box = BOXES[boxId];
+  if (boxId === 'graffiti') {
+    const idx = Math.min(pullNum - 1, box.ticketsPerPull.length - 1);
+    return box.ticketsPerPull[idx];
+  }
+  if (boxId === 'raindrop') {
+    const idx = Math.min(pullNum - 1, box.heartsPerPull.length - 1);
+    return box.heartsPerPull[idx];
+  }
+  return box.costPerPull;
+}
+
+function updateCostTags() {
+  const box = BOXES[currentBox];
+  const st = getSubState(currentBox);
+  const nextPull = st.pulls + 1;
+  const c1 = getCostForPull(currentBox, nextPull);
+  document.getElementById('cost1').textContent = `${c1} ${box.currency}`;
+
+  if (currentBox === 'graffiti' || currentBox === 'raindrop') {
+    const arr = currentBox === 'graffiti' ? box.ticketsPerPull : box.heartsPerPull;
+    let c10 = 0;
+    for (let i = 0; i < 10; i++) {
+      const idx = Math.min(st.pulls + i, arr.length - 1);
+      c10 += arr[idx];
+    }
+    document.getElementById('cost10').textContent = `${c10} ${box.currency}`;
+  } else {
+    document.getElementById('cost10').textContent = `${box.costPerPull * 10} ${box.currency}`;
+  }
+}
+
+// ══════════════════════════════════════════
+// INFO BAR
+// ══════════════════════════════════════════
+function renderInfoBar() {
+  const box = BOXES[currentBox];
+  const st = getSubState(currentBox);
+  let chips = [];
+
+  // Sub label
+  let subLabel = '';
+  if (currentBox === 'big') subLabel = BIG_SUB_BOXES[currentSubBox.big]?.name || '';
+  else if (box.subBoxes) subLabel = box.subBoxes[currentSubBox[currentBox]]?.name || '';
+  if (subLabel) chips.push(`<div class="info-chip" style="grid-column:1/-1"><div class="v" style="font-size:.8rem;color:var(--muted)">${subLabel}</div></div>`);
+
+  chips.push(`<div class="info-chip"><div class="v">${st.pulls}</div><div class="l">Pull สะสม</div></div>`);
+  chips.push(`<div class="info-chip"><div class="v">${fmt(st.totalCurrency)}</div><div class="l">${box.currency}ที่ใช้</div></div>`);
+
+  if (currentBox === 'big') {
+    const inFirstBlock = st.pulls < box.guarantee1;
+    const guar = inFirstBlock ? box.guarantee1 : box.guarantee2;
+    const toGuar = Math.max(0, guar - st.pullsSinceRare);
+    const warn = toGuar <= 5;
+    chips.push(`<div class="info-chip ${warn ? 'warn' : ''}"><div class="v">${st.pullsSinceRare}</div><div class="l">Pull นับ pity (การันตีใน ${toGuar})</div></div>`);
+    const rareCount = st.history.filter(h => h.rare).length;
+    chips.push(`<div class="info-chip good"><div class="v">${rareCount}</div><div class="l">Rare ที่ได้</div></div>`);
+    const nextBonus = box.bonuses.find(b => !st.bonusEarned.includes(b.atPull));
+    if (nextBonus) {
+      chips.push(`<div class="info-chip"><div class="v">${nextBonus.atPull - st.pulls}</div><div class="l">Pull ถึงโบนัส (+${nextBonus.reward} ${nextBonus.rewardUnit})</div></div>`);
+    }
+  } else {
+    const arr = currentBox === 'graffiti' ? box.ticketsPerPull : box.heartsPerPull;
+    const remaining = arr.length - st.pulls;
+    chips.push(`<div class="info-chip ${remaining <= 2 ? 'warn' : ''}"><div class="v">${Math.max(0, remaining)}</div><div class="l">Pull เหลือถึงการันตี</div></div>`);
+    if (st.gotAll) chips.push(`<div class="info-chip good"><div class="v">🎉</div><div class="l">ได้ของทั้งหมดแล้ว!</div></div>`);
+  }
+
+  document.getElementById('info-bar').innerHTML = chips.join('');
+}
+
+// ══════════════════════════════════════════
+// PULL LOGIC
+// ══════════════════════════════════════════
+function rollItem(boxId) {
+  const box = BOXES[boxId];
+  const st = getSubState(boxId);
+
+  if (boxId === 'big') {
+    // Logic:
+    // - ถ้ายังไม่เคยออก Rare เลย → การันตีที่ pull ที่ 10 (pullsSinceRare >= 9)
+    // - ถ้าเคยออกแล้ว → การันตีทุก 25 pull
+    const hasGotFirstRare = st.gotFirstRare === true;
+    const guar = hasGotFirstRare ? box.guarantee2 : box.guarantee1;
+    const isGuaranteed = st.pullsSinceRare >= guar - 1;
+    const isRare = isGuaranteed || Math.random() < box.rareRate;
+
+    if (isRare) {
+      const idx = Math.floor(Math.random() * box.items.rare.length);
+      st.pullsSinceRare = 0;
+      st.gotFirstRare = true;
+      return { name: box.items.rare[idx], rare: true, guaranteed: isGuaranteed };
+    } else {
+      const idx = Math.floor(Math.random() * box.items.common.length);
+      st.pullsSinceRare++;
+      return { name: box.items.common[idx], rare: false };
+    }
+  }
+
+  if (boxId === 'graffiti' || boxId === 'raindrop') {
+    const arr = boxId === 'graffiti' ? box.ticketsPerPull : box.heartsPerPull;
+    const isLastPull = st.pulls >= arr.length - 1;
+    const rareRate = 1 / arr.length;
+    const isRare = isLastPull || Math.random() < rareRate;
+
+    if (isRare) {
+      const result = { name: '🏆 ของใหญ่!', rare: true, luckyAll: true, allItems: box.items.rare };
+      st.gotAll = true;
+      return result;
+    } else {
+      const idx = Math.floor(Math.random() * box.items.common.length);
+      return { name: box.items.common[idx], rare: false };
+    }
+  }
+}
+
+function consumeCurrency(boxId, n) {
+  const box = BOXES[boxId];
+  const st = getSubState(boxId);
+  let cost = 0;
+  for (let i = 0; i < n; i++) {
+    cost += getCostForPull(boxId, st.pulls + i + 1);
+  }
+  st.totalCurrency += cost;
+  return cost;
+}
+
+async function doPull(n) {
+  const box = BOXES[currentBox];
+  const st = getSubState(currentBox);
+  document.getElementById('btn1').disabled = true;
+  document.getElementById('btn10').disabled = true;
+
+  // check if small box already done
+  if ((currentBox === 'graffiti' || currentBox === 'raindrop') && st.gotAll) {
+    showToast('ได้ของครบหมดแล้ว! รีเซ็ตก่อนสุ่มใหม่ 🎉');
+    document.getElementById('btn1').disabled = false;
+    document.getElementById('btn10').disabled = false;
+    return;
+  }
+
+  consumeCurrency(currentBox, n);
+
+  if (n === 1) {
+    // animated single pull
+    st.pulls++;
+    const result = rollItem(currentBox);
+    st.history.push(result);
+    saveState();
+
+    // show animation
+    const animEl = document.getElementById('pull-anim');
+    const animCard = document.getElementById('anim-card');
+    const animImg = document.getElementById('anim-img');
+    const animName = document.getElementById('anim-name');
+    const animType = document.getElementById('anim-type');
+
+    animCard.className = 'anim-card ' + (result.rare ? 'rare' : 'common');
+    const imgUrl = getImage(currentBox, result.name);
+    if (imgUrl) {
+      animImg.outerHTML = `<img id="anim-img" src="${imgUrl}" style="width:72px;height:72px;object-fit:contain;border-radius:12px">`;
+    } else {
+      const placeholder = document.getElementById('anim-img') || animImg;
+      placeholder.textContent = result.rare ? '⭐' : '📦';
+    }
+    animName.textContent = result.luckyAll ? '🏆 ได้ทุกชิ้น!' : result.name;
+    animType.textContent = result.rare ? (result.guaranteed ? '★ Rare (การันตี)' : '★ Rare') : 'Common';
+
+    document.getElementById('stage-empty').style.display = 'none';
+    document.getElementById('card-grid').style.display = 'none';
+    animEl.classList.remove('hidden');
+
+    await sleep(1200);
+    animEl.classList.add('hidden');
+
+    // check bonuses
+    checkBonuses(st);
+
+    renderResults([result]);
+  } else {
+    // 10 pull batch
+    const results = [];
+    for (let i = 0; i < n; i++) {
+      if ((currentBox === 'graffiti' || currentBox === 'raindrop') && st.gotAll) break;
+      st.pulls++;
+      const r = rollItem(currentBox);
+      results.push(r);
+      st.history.push(r);
+    }
+    saveState();
+    checkBonuses(st);
+    renderResults(results);
+  }
+
+  renderInfoBar();
+  renderHistory();
+  updateCostTags();
+  document.getElementById('btn1').disabled = false;
+  document.getElementById('btn10').disabled = false;
+}
+
+function checkBonuses(st) {
+  if (currentBox !== 'big') return;
+  const box = BOXES.big;
+  box.bonuses.forEach(b => {
+    if (st.pulls >= b.atPull && !st.bonusEarned.includes(b.atPull)) {
+      st.bonusEarned.push(b.atPull);
+      st.history.push({ name: `🎁 โบนัส pull ${b.atPull}: +${b.reward} ${b.rewardUnit}`, bonus: true });
+      showToast(`🎉 โบนัส! ได้รับ ${b.reward} ${b.rewardUnit} (ครบ ${b.atPull} pull)`);
+    }
+  });
+}
+
+function getRareTag(boxId, itemName) {
+  if (boxId !== 'big') return '';
+  const sub = currentSubBox.big;
+  const rareObjs = BIG_SUB_BOXES[sub]?.items.rare || [];
+  const found = rareObjs.find(r => r.name === itemName);
+  return found ? found.tag : '';
+}
+
+function renderResults(results) {
+  const grid = document.getElementById('card-grid');
+  document.getElementById('stage-empty').style.display = 'none';
+  grid.style.display = 'grid';
+
+  let displayResults = [];
+  results.forEach(r => {
+    if (r.luckyAll) {
+      r.allItems.forEach(name => displayResults.push({ name, rare: true, luckyAll: true }));
+    } else {
+      displayResults.push(r);
+    }
+  });
+
+  grid.innerHTML = displayResults.map((r, idx) => {
+    const imgUrl = getImage(currentBox, r.name);
+    const imgHtml = imgUrl
+      ? `<img src="${imgUrl}" alt="${r.name}">`
+      : `<div class="img-placeholder">${r.rare ? '⭐' : '📦'}</div>`;
+    const delay = idx * 0.06;
+    const tag = r.rare ? getRareTag(currentBox, r.name) : '';
+    return `<div class="item-card ${r.rare ? 'rare' : 'common'}" style="animation-delay:${delay}s">
+      ${tag ? `<span class="rare-star">${tag}</span>` : (r.rare ? '<span class="rare-star">★</span>' : '')}
+      ${imgHtml}
+      <div class="iname">${r.name}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderStageEmpty() {
+  document.getElementById('stage-empty').style.display = 'flex';
+  document.getElementById('card-grid').style.display = 'none';
+  document.getElementById('card-grid').innerHTML = '';
+}
+
+function renderHistory() {
+  const st = getSubState(currentBox);
+  document.getElementById('hist-row').innerHTML = st.history.slice(-60).reverse().map(h => {
+    if (h.bonus) return `<span class="hist-pill bonus">${h.name}</span>`;
+    return `<span class="hist-pill ${h.rare ? 'rare' : 'common'}">${h.luckyAll ? '🏆ALL' : h.name}</span>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// IMAGE MANAGER
+// ══════════════════════════════════════════
+let imgTab = 'big';
+function switchImgTab(id, el) {
+  imgTab = id;
+  currentBox = id; // sync so sub buttons work
+  document.querySelectorAll('.img-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderImgList();
+}
+
+function getImage(boxId, itemName) {
+  const sub = currentSubBox[boxId] || '_';
+  return ((images[boxId] || {})[sub] || {})[itemName] || null;
+}
+
+function setImage(boxId, itemName, url) {
+  const sub = currentSubBox[boxId] || '_';
+  if (!images[boxId]) images[boxId] = {};
+  if (!images[boxId][sub]) images[boxId][sub] = {};
+  images[boxId][sub][itemName] = url;
+  localStorage.setItem('gacha_images', JSON.stringify(images));
+}
+
+function renderImgList() {
+  const box = BOXES[imgTab];
+  const subKey = currentSubBox[imgTab];
+  let allItems = [];
+  if (imgTab === 'big' && subKey && BIG_SUB_BOXES[subKey]) {
+    const s = BIG_SUB_BOXES[subKey];
+    allItems = [...s.items.rare.map(r => ({name: r.name, rare: true})),
+                ...s.items.common.map(n => ({name: n, rare: false}))];
+  } else if (box.subBoxes && subKey && box.subBoxes[subKey]) {
+    const s = box.subBoxes[subKey];
+    allItems = [...s.items.rare.map(n => ({name: n, rare: true})),
+                ...s.items.common.map(n => ({name: n, rare: false}))];
+  } else {
+    allItems = [...box.items.rare.map(n => ({name: n, rare: true})),
+                ...box.items.common.map(n => ({name: n, rare: false}))];
+  }
+  document.getElementById('img-list').innerHTML = allItems.map(item => {
+    const url = getImage(imgTab, item.name) || '';
+    const preview = url
+      ? `<img src="${url}" style="width:40px;height:40px;object-fit:contain;border-radius:8px">`
+      : `<div class="item-img-preview">${item.rare ? '⭐' : '📦'}</div>`;
+    return `<div class="item-img-row">
+      ${preview}
+      <span class="item-img-name" style="color:${item.rare ? 'var(--accent2)' : 'var(--muted)'}">${item.name}</span>
+      <input class="item-img-input" type="text" placeholder="URL รูปภาพ หรืออัปโหลด →"
+        value="${url}" oninput="setImage('${imgTab}','${item.name}',this.value);renderImgList()">
+      <label class="img-upload-btn">📁<input type="file" accept="image/*" style="display:none"
+        onchange="uploadImg('${imgTab}','${item.name}',this)"></label>
+    </div>`;
+  }).join('');
+}
+
+function uploadImg(boxId, itemName, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { setImage(boxId, itemName, e.target.result); renderImgList(); };
+  reader.readAsDataURL(file);
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function fmt(n) { return Number(n).toLocaleString('th-TH'); }
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('bonus-toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 3000);
+}
+
+function resetAll() {
+  if (!confirm('รีเซ็ตประวัติการสุ่มทั้งหมด?')) return;
+  state = freshState();
+  saveState();
+  renderInfoBar();
+  renderHistory();
+  renderStageEmpty();
+  updateCostTags();
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+// Restore Set from array after JSON parse
+Object.keys(state).forEach(k => {
+  if (state[k].gotRares && !(state[k].gotRares instanceof Set))
+    state[k].gotRares = new Set(state[k].gotRares);
+  // restore nested sub-state Sets
+  ['female','male','house','limpid','drift'].forEach(sub => {
+    if (state[k][sub] && state[k][sub].gotRares && !(state[k][sub].gotRares instanceof Set))
+      state[k][sub].gotRares = new Set(state[k][sub].gotRares);
+  });
+});
+
+syncBoxItems();
+renderSubBoxSel();
+renderInfoBar();
+renderHistory();
+updateCostTags();
+renderImgList();
+</script>
+</body>
+</html>
