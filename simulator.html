@@ -437,13 +437,13 @@ function freshState() {
                 male:   { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set(),gotFirstRare:false },
                 house:  { pulls:0, pullsSinceRare:0, totalCurrency:0, bonusEarned:[], history:[], gotRares: new Set(),gotFirstRare:false }
               },
-    graffiti: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, remainingRare:null, remainingCommon:null,
-                female: { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingRare:null, remainingCommon:null },
-                male:   { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingRare:null, remainingCommon:null }
+    graffiti: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, remainingPool:null,
+                female: { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingPool:null },
+                male:   { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingPool:null }
               },
-    raindrop: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, remainingRare:null, remainingCommon:null,
-                limpid: { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingRare:null, remainingCommon:null },
-                drift:  { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingRare:null, remainingCommon:null }
+    raindrop: { pulls: 0, totalCurrency: 0, history: [], gotAll: false, remainingPool:null,
+                limpid: { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingPool:null },
+                drift:  { pulls:0, totalCurrency:0, history:[], gotAll:false, remainingPool:null }
               }
   };
 }
@@ -641,46 +641,205 @@ function rollItem(boxId) {
   }
 
   if (boxId === 'graffiti' || boxId === 'raindrop') {
-    const arr = boxId === 'graffiti' ? box.ticketsPerPull : box.heartsPerPull;
-    const totalSlots = arr.length; // 10 or 12
+    // ══════════════════════════════════════════
+    // Weighted probability table จาก Excel
+    // กราฟฟิตี้ (10 draws): Special suppressed ช่วงต้น, พุ่งช่วงท้าย
+    // เรนดรอป (12 draws): pattern เดียวกัน
+    // ──────────────────────────────────────────
+    // GRAFFITI item structure (10 items):
+    //   [0] Special (1 ชิ้น)
+    //   [1] Rare tier-2 / Graffiti Wing Drawstring Bag (1 ชิ้น)
+    //   [2-6] Rare tier-1 (5 ชิ้น, prob เท่ากัน)
+    //   [7-8] Normal tier-1 (2 ชิ้น, prob เท่ากัน)
+    //   [9] Normal tier-2 (1 ชิ้น, ออกง่ายช่วงต้น)
+    // RAINDROP item structure (12 items):
+    //   [0] Moonlight Special (1 ชิ้น)
+    //   [1] Moonlight Premium tier-2 / Hat (1 ชิ้น)
+    //   [2-4] Moonlight Premium tier-1a (3 ชิ้น, prob เท่ากัน: Spiral/Teardrop/Sun Hat)
+    //   [5-7] Moonlight Premium tier-1b (3 ชิ้น, prob เท่ากัน: Backpack/Gloves/Boots)
+    //   [8-10] Normal tier-1 (3 ชิ้น, prob เท่ากัน)
+    //   [11] Normal tier-2 (1 ชิ้น, ออกง่ายช่วงต้น)
+    // ══════════════════════════════════════════
 
-    // Init remaining pools per sub-state (no duplicates)
-    if (!st.remainingRare)   st.remainingRare   = [...box.items.rare];
-    if (!st.remainingCommon) st.remainingCommon = [...box.items.common];
+    // probability ของแต่ละ "slot type" ต่อ draw (conditional, ยังไม่ได้รับชิ้นนั้น)
+    // ค่าจาก Excel — draw index 0-based
+    const GRAFFITI_PROB_TABLE = [
+      // [special, rare_t2, rare_t1_each, normal_t1_each, normal_t2]
+      [1.110e-3, 1.7075e-2, 8.5375e-2, 0.12332,  0.30830],  // draw 1
+      [1.110e-3, 1.8521e-2, 8.5086e-2, 0.16002,  0.23490],  // draw 2
+      [1.110e-3, 2.0327e-2, 8.4725e-2, 0.19265,  0.16965],  // draw 3
+      [1.347e-3, 2.6351e-2, 1.0250e-1, 0.17286,  0.11406],  // draw 4
+      [1.664e-3, 3.6581e-2, 1.2577e-1, 0.13037,  0.07218],  // draw 5
+      [1.945e-3, 5.5099e-2, 1.4456e-1, 0.08830,  0.04354],  // draw 6
+      [6.2611e-2, 8.0852e-2, 1.4424e-1, 0.05455, 0.02621],  // draw 7
+      [0.123795, 0.126839,  1.3222e-1, 0.03569,  0.01688],  // draw 8
+      [0.182722, 0.485685,  5.2215e-2, 0.03078,  0.00895],  // draw 9
+      [1.0,      0.0,       0.0,       0.0,      0.0],       // draw 10 (การันตี Special)
+    ];
 
-    const pullIndex  = st.pulls; // 0-based index of this pull
-    const slotsLeft  = totalSlots - pullIndex;
-    const rareLeft   = st.remainingRare.length;
-    const commonLeft = st.remainingCommon.length;
+    const RAINDROP_PROB_TABLE = [
+      // [special, premium_t2, premium_t1a_each, premium_t1b_each, normal_t1_each, normal_t2]
+      [1.110e-3, 1.2064e-2, 6.0319e-2, 0.120639, 8.8790e-2, 0.17758],  // draw 1
+      [1.110e-3, 1.3399e-2, 6.3652e-2, 0.116861, 9.5367e-2, 0.15785],  // draw 2
+      [1.110e-3, 1.5112e-2, 6.7643e-2, 0.112299, 0.101944,  0.13812],  // draw 3
+      [1.110e-3, 1.7415e-2, 7.2538e-2, 0.106636, 0.108521,  0.11839],  // draw 4
+      [1.144e-3, 2.1092e-2, 8.0379e-2, 0.103332, 0.109324,  9.8656e-2], // draw 5
+      [1.221e-3, 2.7544e-2, 9.2210e-2, 0.102152, 0.102817,  7.9697e-2], // draw 6
+      [2.0799e-2, 4.5336e-2, 0.103648, 9.7895e-2, 8.9269e-2, 6.1431e-2], // draw 7
+      [4.3406e-2, 7.4076e-2, 0.113685, 8.8650e-2, 7.5348e-2, 4.9468e-2], // draw 8
+      [7.0248e-2, 0.106974,  0.121984, 7.1680e-2, 6.6179e-2, 4.3249e-2], // draw 9
+      [0.102297,  0.147208,  0.127335, 4.5682e-2, 6.4840e-2, 3.6924e-2], // draw 10
+      [0.139814,  0.429007,  5.2763e-2, 1.1440e-2, 7.1571e-2, 2.3857e-2], // draw 11
+      [1.0,       0.0,       0.0,      0.0,       0.0,       0.0],        // draw 12 (การันตี Special)
+    ];
 
-    // P(rare this pull) = rareLeft / slotsLeft  — true box gacha math
-    const forceRare = slotsLeft <= rareLeft; // must draw rare (no commons left for remaining slots)
-    const isRare = forceRare || (rareLeft > 0 && Math.random() < rareLeft / slotsLeft);
+    // Init remaining pools (track which items in each tier are still available)
+    if (!st.remainingPool) {
+      if (boxId === 'graffiti') {
+        // rare = [Special, RareT2, RT1_0, RT1_1, RT1_2, RT1_3, RT1_4]
+        // common = [NT1_0, NT1_1, NT2]
+        st.remainingPool = {
+          special:   [box.items.rare[0]],
+          rareT2:    [box.items.rare[1]],
+          rareT1:    box.items.rare.slice(2),       // 5 items
+          normalT1:  box.items.common.slice(0, 2),  // 2 items
+          normalT2:  [box.items.common[2]],         // 1 item
+        };
+      } else {
+        // rare = [Special, PremiumT2, PT1a_0, PT1a_1, PT1a_2, PT1b_0, PT1b_1, PT1b_2]
+        // common = [NT1_0, NT1_1, NT1_2, NT2]
+        st.remainingPool = {
+          special:    [box.items.rare[0]],
+          premiumT2:  [box.items.rare[1]],
+          premiumT1a: box.items.rare.slice(2, 5),   // 3 items
+          premiumT1b: box.items.rare.slice(5, 8),   // 3 items
+          normalT1:   box.items.common.slice(0, 3), // 3 items
+          normalT2:   [box.items.common[3]],        // 1 item
+        };
+      }
+    }
 
-    if (isRare && rareLeft > 0) {
-      const idx = Math.floor(Math.random() * st.remainingRare.length);
-      const name = st.remainingRare.splice(idx, 1)[0];
+    // Legacy: migrate old remainingRare/remainingCommon state → remainingPool
+    if (!st.remainingPool && (st.remainingRare || st.remainingCommon)) {
+      st.remainingPool = null; // will reinit above on next pull
+    }
 
-      // Special = ชิ้นแรกของ rare list → luckyAll ได้ของที่เหลือทั้งหมดในตู้ทันที
-      const specialName = box.items.rare[0];
-      if (name === specialName) {
-        const allRemaining = [...st.remainingRare, ...st.remainingCommon];
-        st.remainingRare = [];
-        st.remainingCommon = [];
-        st.gotAll = true;
-        return { name, rare: true, luckyAll: true, allItems: allRemaining };
+    const drawIndex = st.pulls; // 0-based
+    const pool = st.remainingPool;
+
+    function pickFrom(arr) {
+      if (!arr || arr.length === 0) return null;
+      const i = Math.floor(Math.random() * arr.length);
+      return arr.splice(i, 1)[0];
+    }
+
+    function poolEmpty() {
+      return Object.values(pool).every(a => a.length === 0);
+    }
+
+    // ── เลือก item ตาม weighted probability ──
+    let chosenName = null;
+    let isRare = false;
+    let isSpecial = false;
+
+    if (boxId === 'graffiti') {
+      const row = GRAFFITI_PROB_TABLE[Math.min(drawIndex, 9)];
+      // ถ้า draw สุดท้าย (index 9) การันตี special
+      if (drawIndex >= 9 || row[0] >= 1.0) {
+        // การันตี Special
+        chosenName = pool.special.length > 0
+          ? pickFrom(pool.special)
+          : pickFrom(pool.rareT2) || pickFrom(pool.rareT1) || pickFrom(pool.normalT1) || pickFrom(pool.normalT2) || '?';
+        isSpecial = chosenName === box.items.rare[0];
+        isRare = true;
+      } else {
+        // สุ่มตาม prob table, เฉพาะ tier ที่ยังมีของเหลือ
+        const slots = [
+          { tier: 'special',  prob: pool.special.length  > 0 ? row[0] : 0 },
+          { tier: 'rareT2',   prob: pool.rareT2.length   > 0 ? row[1] : 0 },
+          ...pool.rareT1.map((_, i) => ({ tier: 'rareT1', prob: pool.rareT1.length > 0 ? row[2] : 0 })).slice(0, 1),
+          ...pool.normalT1.map((_, i) => ({ tier: 'normalT1', prob: pool.normalT1.length > 0 ? row[3] : 0 })).slice(0, 1),
+          { tier: 'normalT2', prob: pool.normalT2.length > 0 ? row[4] : 0 },
+        ];
+
+        // สร้าง cumulative prob สำหรับ tier ที่มีของ แล้ว normalize
+        const tierProbs = [
+          { tier: 'special',  totalProb: pool.special.length  > 0 ? row[0] : 0 },
+          { tier: 'rareT2',   totalProb: pool.rareT2.length   > 0 ? row[1] : 0 },
+          { tier: 'rareT1',   totalProb: pool.rareT1.length   > 0 ? row[2] * pool.rareT1.length : 0 },
+          { tier: 'normalT1', totalProb: pool.normalT1.length > 0 ? row[3] * pool.normalT1.length : 0 },
+          { tier: 'normalT2', totalProb: pool.normalT2.length > 0 ? row[4] : 0 },
+        ];
+
+        const totalProb = tierProbs.reduce((s, t) => s + t.totalProb, 0);
+        let rand = Math.random() * totalProb;
+        let chosenTier = tierProbs[tierProbs.length - 1].tier; // fallback
+        for (const t of tierProbs) {
+          rand -= t.totalProb;
+          if (rand <= 0) { chosenTier = t.tier; break; }
+        }
+
+        if (chosenTier === 'special')  { chosenName = pickFrom(pool.special);  isRare = true; isSpecial = true; }
+        else if (chosenTier === 'rareT2')   { chosenName = pickFrom(pool.rareT2);   isRare = true; }
+        else if (chosenTier === 'rareT1')   { chosenName = pickFrom(pool.rareT1);   isRare = true; }
+        else if (chosenTier === 'normalT1') { chosenName = pickFrom(pool.normalT1); isRare = false; }
+        else                                { chosenName = pickFrom(pool.normalT2); isRare = false; }
       }
 
-      if (st.remainingRare.length === 0 && st.remainingCommon.length === 0) st.gotAll = true;
-      return { name, rare: true };
-    } else if (commonLeft > 0) {
-      const idx = Math.floor(Math.random() * st.remainingCommon.length);
-      const name = st.remainingCommon.splice(idx, 1)[0];
-      if (st.remainingRare.length === 0 && st.remainingCommon.length === 0) st.gotAll = true;
-      return { name, rare: false };
     } else {
-      return { name: '?', rare: false };
+      // RAINDROP
+      const row = RAINDROP_PROB_TABLE[Math.min(drawIndex, 11)];
+      if (drawIndex >= 11 || row[0] >= 1.0) {
+        chosenName = pool.special.length > 0
+          ? pickFrom(pool.special)
+          : pickFrom(pool.premiumT2) || pickFrom(pool.premiumT1a) || pickFrom(pool.premiumT1b)
+            || pickFrom(pool.normalT1) || pickFrom(pool.normalT2) || '?';
+        isSpecial = chosenName === box.items.rare[0];
+        isRare = true;
+      } else {
+        const tierProbs = [
+          { tier: 'special',    totalProb: pool.special.length    > 0 ? row[0] : 0 },
+          { tier: 'premiumT2',  totalProb: pool.premiumT2.length  > 0 ? row[1] : 0 },
+          { tier: 'premiumT1a', totalProb: pool.premiumT1a.length > 0 ? row[2] * pool.premiumT1a.length : 0 },
+          { tier: 'premiumT1b', totalProb: pool.premiumT1b.length > 0 ? row[3] * pool.premiumT1b.length : 0 },
+          { tier: 'normalT1',   totalProb: pool.normalT1.length   > 0 ? row[4] * pool.normalT1.length : 0 },
+          { tier: 'normalT2',   totalProb: pool.normalT2.length   > 0 ? row[5] : 0 },
+        ];
+
+        const totalProb = tierProbs.reduce((s, t) => s + t.totalProb, 0);
+        let rand = Math.random() * totalProb;
+        let chosenTier = tierProbs[tierProbs.length - 1].tier;
+        for (const t of tierProbs) {
+          rand -= t.totalProb;
+          if (rand <= 0) { chosenTier = t.tier; break; }
+        }
+
+        if (chosenTier === 'special')     { chosenName = pickFrom(pool.special);    isRare = true; isSpecial = true; }
+        else if (chosenTier === 'premiumT2')  { chosenName = pickFrom(pool.premiumT2);  isRare = true; }
+        else if (chosenTier === 'premiumT1a') { chosenName = pickFrom(pool.premiumT1a); isRare = true; }
+        else if (chosenTier === 'premiumT1b') { chosenName = pickFrom(pool.premiumT1b); isRare = true; }
+        else if (chosenTier === 'normalT1')   { chosenName = pickFrom(pool.normalT1);   isRare = false; }
+        else                                  { chosenName = pickFrom(pool.normalT2);   isRare = false; }
+      }
     }
+
+    const name = chosenName || '?';
+
+    // Special → luckyAll: ได้ของที่เหลือทั้งหมดทันที
+    if (isSpecial && name === box.items.rare[0]) {
+      const allRemaining = [
+        ...(pool.special   || []), ...(pool.rareT2    || []), ...(pool.rareT1   || []),
+        ...(pool.premiumT2 || []), ...(pool.premiumT1a|| []), ...(pool.premiumT1b|| []),
+        ...(pool.normalT1  || []), ...(pool.normalT2  || []),
+      ];
+      // clear pool
+      Object.keys(pool).forEach(k => pool[k] = []);
+      st.gotAll = true;
+      return { name, rare: true, luckyAll: true, allItems: allRemaining };
+    }
+
+    if (poolEmpty()) st.gotAll = true;
+    return { name, rare: isRare };
   }
 }
 
