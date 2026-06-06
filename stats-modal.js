@@ -509,7 +509,7 @@ function showStatsModal(cfg, actualPulls) {
   wrapper.innerHTML = buildModalHTML(cfg, actualPulls, stats, bins);
   document.body.appendChild(wrapper);
 }
-
+ 
 function closeStatsModal() {
   const el = document.getElementById('stats-modal-root');
   if (el) el.remove();
