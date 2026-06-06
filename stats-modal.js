@@ -555,7 +555,7 @@ function closeStatsModal() {
   if (el) el.remove();
 }
 
-// ── Download modal as PNG via html2canvas ──
+// ── Download modal as PNG via dom-to-image-more ──
 function downloadStatsCard() {
   const modalInner = document.querySelector('#stats-modal-root [onclick="event.stopPropagation()"]');
   if (!modalInner) return;
@@ -564,33 +564,37 @@ function downloadStatsCard() {
     const btns = modalInner.querySelectorAll('button');
     btns.forEach(b => { b._origDisplay = b.style.display; b.style.display = 'none'; });
 
-    html2canvas(modalInner, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      onclone: (doc) => {
-        const el = doc.querySelector('#stats-modal-root [onclick="event.stopPropagation()"]');
-        if (el) { el.style.maxHeight = 'none'; el.style.overflow = 'visible'; }
-      }
-    }).then(canvas => {
-      btns.forEach(b => { b.style.display = b._origDisplay || ''; });
-      canvas.toBlob(blob => {
-        const url = URL.createObjectURL(blob);
-        const a   = document.createElement('a');
-        a.href = url; a.download = 'fan-hearto-result.png';
+    // clone ออกมา render นอกหน้าจอ เพื่อให้ได้ความสูงเต็ม ไม่ถูก max-height clip
+    const clone = modalInner.cloneNode(true);
+    clone.style.cssText = `
+      position:fixed; left:-9999px; top:0;
+      width:560px; max-height:none; overflow:visible;
+      border-radius:24px; background:#fff;
+    `;
+    document.body.appendChild(clone);
+
+    setTimeout(() => {
+      domtoimage.toPng(clone, {
+        scale: 2,
+        bgcolor: '#ffffff',
+        style: { borderRadius: '24px' }
+      }).then(dataUrl => {
+        document.body.removeChild(clone);
+        btns.forEach(b => { b.style.display = b._origDisplay || ''; });
+        const a = document.createElement('a');
+        a.href = dataUrl; a.download = 'fan-hearto-result.png';
         a.click();
-        URL.revokeObjectURL(url);
-      }, 'image/png');
-    }).catch(() => {
-      btns.forEach(b => { b.style.display = b._origDisplay || ''; });
-      alert('ไม่สามารถบันทึกรูปได้ ลองอีกครั้ง');
-    });
+      }).catch(() => {
+        document.body.removeChild(clone);
+        btns.forEach(b => { b.style.display = b._origDisplay || ''; });
+        alert('ไม่สามารถบันทึกรูปได้ ลองอีกครั้ง');
+      });
+    }, 300); // รอให้ font/image โหลด
   }
 
-  if (typeof html2canvas === 'undefined') {
+  if (typeof domtoimage === 'undefined') {
     const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/dom-to-image-more/3.4.0/dom-to-image-more.min.js';
     s.onload = doCapture;
     document.head.appendChild(s);
   } else {
