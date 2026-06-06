@@ -112,6 +112,7 @@ function getAudio() {
 }
 function playSound(type) {
   const ctx = getAudio(), now = ctx.currentTime;
+  
   if (type === 'deal') {
     const o = ctx.createOscillator(), g = ctx.createGain();
     o.connect(g); g.connect(ctx.destination); o.type = 'triangle';
@@ -125,14 +126,36 @@ function playSound(type) {
     g.gain.setValueAtTime(.07,now); g.gain.linearRampToValueAtTime(.001,now+.12);
     o.start(now); o.stop(now+.12);
   } else if (type === 'rare') {
-    [523,659,784,1047,1319,1568].forEach((freq,i) => {
+    // 🔊 [ข้อ 1] เสียงแฟรี่กระจก (Shimmer/Sparkle Glitter) สำหรับตู้ใหญ่ได้ของรุ้ง
+    // สร้างเสียงกรุ๊งกริ๊งความถี่สูงสลับกันอย่างรวดเร็ว (Arpeggio ถี่ๆ) เหมือนผงแฟรี่
+    const freqs = [880, 1318.5, 1760, 2093, 2637, 3520];
+    freqs.forEach((freq, i) => {
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination); o.type = 'sine';
-      const t = now + i*.05;
+      const t = now + i * 0.04; // ดีเลย์สั้นมากให้เสียงซ้อนกันเป็นประกาย
       o.frequency.setValueAtTime(freq, t);
-      g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(.055,t+.02);
-      g.gain.exponentialRampToValueAtTime(.001, t+.8);
-      o.start(now); o.stop(t+.8);
+      o.frequency.exponentialRampToValueAtTime(freq * 1.2, t + 0.15); // หางเสียงเชิดขึ้น
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.04, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+      o.start(t); o.stop(t + 0.3);
+    });
+  } else if (type === 'ta-da') {
+    // 🔊 [ข้อ 2] เสียงท้าด้าา! (Fanfare ครบตู้)
+    // คอร์ด C Major ไต่ระดับความถี่ขึ้นไปแล้วจบด้วยเสียงประสานที่ทรงพลัง
+    const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+    notes.forEach((freq, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type = 'triangle';
+      const t = now + i * 0.1;
+      o.frequency.setValueAtTime(freq, t);
+      
+      // ถ้าเป็นโน้ตตัวสุดท้าย (C5) ให้ลากเสียงยาวเป็นพิเศษเพื่อความยิ่งใหญ่
+      const duration = (i === notes.length - 1) ? 0.8 : 0.2;
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.1, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + duration);
+      o.start(t); o.stop(t + duration);
     });
   }
 }
