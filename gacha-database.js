@@ -544,31 +544,26 @@ const GACHA_DATABASE = {
 // THEME_META — ใส่ URL รูปที่นี่
 // bannerUrl : รูปแบนเนอร์การ์ดบน index และหัว simulator
 // bgUrl     : รูปพื้นหลังทั้งเว็บ (ใส่ได้ต่อ theme หรือจะใช้ตัวเดียวกันก็ได้)
-//
-// วิธีหา URL:
-//   GitHub  → อัปไฟล์ใน repo แล้วใช้  https://raw.githubusercontent.com/<user>/<repo>/main/images/<file>
-//   Imgur   → คลิกขวารูป "Copy image address"
-//   อื่นๆ   → URL ตรงไปที่ไฟล์ภาพ (.jpg/.png/.webp)
 // ══════════════════════════════════════════
 const THEME_META = {
   "✨ Golden Mirage": {
-    bannerUrl: "",   // ← วาง URL รูปแบนเนอร์ที่นี่
-    bgUrl:     ""    // ← วาง URL รูปพื้นหลังที่นี่ (ถ้าไม่ต้องการใส่ว่างไว้)
+    bannerUrl: "/images/Golden Mirage.jpg",
+    bgUrl:     ""
   },
   "🎪 Lustrous Parade": {
-    bannerUrl: "",
+    bannerUrl: "/images/Lustrous Parade.jpg",
     bgUrl:     ""
   },
   "🎨 Graffiti Channel": {
-    bannerUrl: "",
+    bannerUrl: "/images/Graffiti Channel.jpg",
     bgUrl:     ""
   },
   "🐻 Butter Bear": {
-    bannerUrl: "",
+    bannerUrl: "/images/Butter Bear.jpg",
     bgUrl:     ""
   },
   "🌧️ Raindrop Song": {
-    bannerUrl: "",
+    bannerUrl: "/images/Raindrop Song.jpg",
     bgUrl:     ""
   }
 };
