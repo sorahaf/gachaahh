@@ -356,11 +356,13 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
       <!-- Banner + Header -->
       <div style="position:relative;border-radius:24px 24px 0 0;overflow:hidden;height:160px;flex-shrink:0;">
         ${bannerUrl ? `
-          <img src="${bannerUrl}" alt="" style="
-            position:absolute;inset:0;width:100%;height:100%;
-            object-fit:cover;object-position:center center;
+          <div style="
+            position:absolute;inset:0;
+            background-image:url('${bannerUrl}');
+            background-size:cover;
+            background-position:center center;
             opacity:.6;filter:saturate(1.15);
-          ">
+          "></div>
         ` : `
           <div style="position:absolute;inset:0;background:linear-gradient(120deg,#dbeafe,#fce7f3);"></div>
         `}
