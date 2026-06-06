@@ -369,12 +369,12 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
         <!-- fade ล่าง -->
         <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 15%,rgba(255,255,255,.88) 65%,#fff 100%);"></div>
         <!-- ข้อความทับ -->
-        <div style="position:absolute;bottom:0;left:0;right:0;z-index:1;padding:.8rem 1.4rem .9rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;">
-          <div>
-            <div style="font-size:.65rem;font-weight:800;color:#6b7db3;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;text-shadow:0 1px 4px rgba(255,255,255,.9)">
+        <div style="position:absolute;bottom:0;left:0;right:0;z-index:1;padding:.8rem 1.4rem .9rem;display:flex;align-items:flex-end;justify-content:space-between;gap:.5rem;">
+          <div style="min-width:0;flex:1;">
+            <div style="font-size:.65rem;font-weight:800;color:#6b7db3;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;text-shadow:0 1px 4px rgba(255,255,255,.9);white-space:nowrap;">
               สถิติการล้างตู้ · ${SIM_ROUNDS.toLocaleString()} simulations
             </div>
-            <div style="font-size:1.05rem;font-weight:800;color:#1e2d5a;line-height:1.2;text-shadow:0 1px 6px rgba(255,255,255,.95)">
+            <div style="font-size:1.05rem;font-weight:800;color:#1e2d5a;line-height:1.2;text-shadow:0 1px 6px rgba(255,255,255,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
               ${cfg.name}
             </div>
           </div>
@@ -435,15 +435,14 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
         </div>
         <div style="background:#f8faff;border:1.5px solid #dde6ff;border-radius:14px;padding:.8rem .6rem .4rem;">
           ${chart}
-          <div style="display:flex;gap:1rem;margin-top:.5rem;padding:0 .3rem;flex-wrap:wrap;">
-            <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:#64748b;">
-              <span style="display:inline-block;width:14px;height:3px;background:#4f8ef7;border-radius:2px"></span>Distribution
+          <div style="display:flex;gap:1rem;margin-top:.5rem;padding:0 .3rem;flex-wrap:nowrap;">
+            <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:#64748b;white-space:nowrap;">
+              <span style="display:inline-block;width:14px;height:3px;background:#4f8ef7;border-radius:2px;flex-shrink:0"></span>Distribution
             </span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:#a78bfa;">
-              <span style="display:inline-block;width:14px;height:2px;background:#a78bfa;border-radius:2px;border-top:2px dashed #a78bfa"></span>ค่ากลาง
+            <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:#a78bfa;white-space:nowrap;">
+              <span style="display:inline-block;width:14px;height:2px;background:#a78bfa;border-radius:2px;border-top:2px dashed #a78bfa;flex-shrink:0"></span>ค่ากลาง
             </span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:${zone.color};">
-              <span style="display:inline-block;width:10px;height:10px;background:${zone.color};border-radius:50%;"></span>ผลของคุณ
+            <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:${zone.color};white-space:nowrap;">              <span style="display:inline-block;width:10px;height:10px;background:${zone.color};border-radius:50%;"></span>ผลของคุณ
             </span>
           </div>
         </div>
