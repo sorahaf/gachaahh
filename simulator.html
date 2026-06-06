@@ -43,6 +43,7 @@
       <span class="cost-tag" id="cost10"></span>
     </button>
     <button class="pull-btn reset-pull" onclick="resetPool()">🔄 รีเซ็ต</button>
+    <button class="pull-btn compare-btn" onclick="openCompare()">📊 เปรียบเทียบ</button>
   </div>
 
   <!-- Stage -->
@@ -71,6 +72,7 @@
 <script src="gacha-core.js"></script>
 <script src="gacha-database.js"></script>
 <script src="stats-modal.js"></script>
+<script src="compare-modal.js"></script>
 <script>
 // ── Background จาก THEME_META ──
 const params   = new URLSearchParams(location.search);
@@ -355,6 +357,10 @@ function doPull(n) {
 function getItemImgPath(name) {
   // encode space → %20 เพื่อให้ GitHub Pages โหลดได้
   return `images/items/${name.replace(/ /g, '%20')}.jpg`;
+}
+
+function openCompare() {
+  showCompareModal(GACHA_DATABASE[activeId], 500);
 }
 
 function resetPool() {
