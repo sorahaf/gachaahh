@@ -546,29 +546,29 @@ const GACHA_DATABASE = {
 // bgUrl     : รูปพื้นหลังทั้งเว็บ (ใส่ได้ต่อ theme หรือจะใช้ตัวเดียวกันก็ได้)
 //
 // วิธีหา URL:
-//   GitHub  → อัปไฟล์ใน repo แล้วใช้  https://raw.githubusercontent.com/<user>/<repo>/main/images/<file>
+//   GitHub  → อัปไฟล์ใน repo แล้วใช้  https://raw.githubusercontent.com/<user>/<repo>/main/images/<file> ==>images/
 //   Imgur   → คลิกขวารูป "Copy image address"
 //   อื่นๆ   → URL ตรงไปที่ไฟล์ภาพ (.jpg/.png/.webp)
 // ══════════════════════════════════════════
 const THEME_META = {
   "✨ Golden Mirage": {
-    bannerUrl: "https://raw.github.com/sorahaf/gachaahh/blob/main/images/Golden%20Mirage.jpg",   // ← วาง URL รูปแบนเนอร์ที่นี่
+    bannerUrl: "images/Golden%20Mirage.jpg",   // ← วาง URL รูปแบนเนอร์ที่นี่
     bgUrl:     ""    // ← วาง URL รูปพื้นหลังที่นี่ (ถ้าไม่ต้องการใส่ว่างไว้)
   },
   "🎪 Lustrous Parade": {
-    bannerUrl: "https://raw.github.com/sorahaf/gachaahh/blob/main/images/Lustrous%20Parade.jpg",
+    bannerUrl: "images/Lustrous%20Parade.jpg",
     bgUrl:     ""
   },
   "🎨 Graffiti Channel": {
-    bannerUrl: "https://raw.github.com/sorahaf/gachaahh/blob/main/images/Graffiti%20Channel.jpg",
+    bannerUrl: "images/Graffiti%20Channel.jpg",
     bgUrl:     ""
   },
   "🐻 Butter Bear": {
-    bannerUrl: "https://raw.github.com/sorahaf/gachaahh/blob/main/images/Butter%20Bear.jpg",
+    bannerUrl: "images/Butter%20Bear.jpg",
     bgUrl:     ""
   },
   "🌧️ Raindrop Song": {
-    bannerUrl: "https://raw.github.com/sorahaf/gachaahh/blob/main/images/Raindrop%20Song.jpg",
+    bannerUrl: "images/Raindrop%20Song.jpg",
     bgUrl:     ""
   }
 };
