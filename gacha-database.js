@@ -583,8 +583,16 @@ function getGroupedCabinets() {
   return groups;
 }
 
+// strip emoji + whitespace นำหน้า → ชื่อ theme สะอาด เช่น "✨ Golden Mirage" → "Golden Mirage"
+function themeToFilename(themeKey) {
+  return themeKey.replace(/^[\p{Emoji}\s]+/u, '').trim();
+}
+
 function getThemeBanner(themeKey) {
-  return THEME_META[themeKey]?.bannerUrl || "";
+  const manual = THEME_META[themeKey]?.bannerUrl;
+  if (manual) return manual;
+  const name = themeToFilename(themeKey);
+  return `images/${name.replace(/ /g, '%20')}.jpg`;
 }
 
 function getThemeBg(themeKey) {
