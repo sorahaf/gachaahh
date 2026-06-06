@@ -325,6 +325,14 @@ body {
 }
 .reset-pull:hover { color: var(--red); border-color: #fca5a5; transform: translateY(-2px); }
 
+.compare-btn {
+  flex: 0 0 auto; min-width: auto;
+  background: linear-gradient(120deg, #a78bfa, #6366f1);
+  color: #fff;
+  box-shadow: 0 5px 0 #5b21b6, 0 8px 20px rgba(167,139,250,.3);
+}
+.compare-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 0 #5b21b6, 0 12px 24px rgba(167,139,250,.35); }
+
 .cost-tag { display: block; font-size: .68rem; font-weight: 600; opacity: .85; margin-top: 2px; }
 
 /* ══════════════════════════════════════
