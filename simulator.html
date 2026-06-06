@@ -317,12 +317,23 @@ function doPull(n) {
   visible.forEach((r, i) => {
     const cls   = r.isSpecial ? 'special' : r.isRare ? 'rare' : '';
     const badge = r.isPity ? 'Pity ✓' : r.isSpecial ? '✨ JACKPOT' : r.isRare ? '★ Rare' : 'Normal';
+    const imgPath = getItemImgPath(r.name);
+    const dupHtml = r.dup
+      ? `<div class="dup-badge">♻️ ซ้ำ</div>`
+      : '';
     grid.insertAdjacentHTML('beforeend', `
       <div class="gacha-card-holder" style="animation-delay:${i*.08}s">
         <div class="item-card ${cls}">
           <span class="badge">${badge}</span>
-          <div class="card-name">${r.name}${r.dup?` <span style="color:var(--orange)">♻️</span>`:''}</div>
-          <div class="debug-chance"></div>
+          <div class="item-img-wrap">
+            <img src="${imgPath}" alt="${r.name}"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="item-img-fallback" style="display:none">
+              ${r.isSpecial ? '✨' : r.isRare ? '⭐' : '🎁'}
+            </div>
+          </div>
+          <div class="card-name">${r.name}</div>
+          ${dupHtml}
         </div>
       </div>
     `);
@@ -339,6 +350,11 @@ function doPull(n) {
     }
     document.getElementById('btn1').disabled = document.getElementById('btn10').disabled = false;
   }, visible.length * 80 + 260);
+}
+
+// ── helper: สร้าง path รูปไอเทม ──
+function getItemImgPath(name) {
+  return `img/items/${name}.jpg`;
 }
 
 function resetPool() {
