@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Heartopia — Simulator</title>
+<title>Fan Hearto Gacha Sim</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -241,12 +241,17 @@ function renderDebug(cfg, st) {
     `;
   } else {
     const total = cfg.items.length, left = st.remainingIdx ? st.remainingIdx.length : total;
-    const sp = cfg.items.find(i => i.isSpecial);
+    const sp    = cfg.items.find(i => i.isSpecial);
+
+    // ดึง avg rates จาก cache (คำนวณครั้งแรกครั้งเดียว)
+    const rates = calcAvgRates(activeId, cfg);
+
     html = `
       <div class="debug-box"><b>Engine:</b> Weight Step · ${cfg.name}</div>
       <div class="debug-box" style="border-left-color:var(--teal)"><b>ไอเทมคงเหลือ:</b> ${left} / ${total}</div>
-      <div class="debug-box" style="border-left-color:var(--pink)"><b>Special:</b> ${sp?.name||'-'} (${sp?.weight||0}%)</div>
-      <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>ราคา Max:</b> ${cfg.costMap[cfg.costMap.length-1]} ${cfg.cabinetType==='heart_step'?'💜':'ตั๋ว'}/ครั้ง</div>
+      <div class="debug-box" style="border-left-color:var(--pink)"><b>Special avg:</b> ${rates.special}% (${sp?.name||'-'})</div>
+      <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>Rare avg:</b> ${rates.rare}% · Normal: ${rates.normal}%</div>
+      <div class="debug-box" style="border-left-color:var(--blue)"><b>ราคา Max:</b> ${cfg.costMap[cfg.costMap.length-1]} ${cfg.cabinetType==='heart_step'?'💜':'ตั๋ว'}/ครั้ง</div>
     `;
   }
   document.getElementById('debug-grid').innerHTML = html;
@@ -266,7 +271,12 @@ function renderHistory(st) {
 }
 
 // ── Actions ──
-function switchSub(id) { activeId = id; clearStage(); renderSubBtns(); updateUI(); }
+function switchSub(id) {
+  activeId = id; clearStage(); renderSubBtns(); updateUI();
+  // pre-warm cache ของตู้นี้ใน background ถ้ายังไม่มี
+  const cfg = GACHA_DATABASE[activeId];
+  if (cfg.cabinetType !== 'big') setTimeout(() => calcAvgRates(activeId, cfg), 50);
+}
 function clearStage() {
   document.getElementById('stage-empty').style.display = 'flex';
   document.getElementById('card-grid').style.display   = 'none';
@@ -374,6 +384,12 @@ function resetAllState() {
 
 renderSubBtns();
 updateUI();
+
+// pre-warm rate cache ของตู้แรกที่โหลด
+(function() {
+  const cfg = GACHA_DATABASE[activeId];
+  if (cfg.cabinetType !== 'big') setTimeout(() => { calcAvgRates(activeId, cfg); updateUI(); }, 100);
+})();
 </script>
 
 <footer style="position:relative;z-index:1;text-align:center;padding:1.5rem 1rem 2rem;margin-top:2rem;border-top:1px solid #e0e7ff;">
