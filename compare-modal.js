@@ -4,8 +4,58 @@
 const COMPARE_MAX_PEOPLE = 2000; // กันเครื่องค้าง
 
 // ══════════════════════════════════════════
-// simulate N รอบ (reuse engine จาก stats-modal)
+// Average Rate Calculator — step pool only
+// run SIM_ROUNDS รอบ นับสัดส่วน Special/Rare/Normal ต่อ pull
 // ══════════════════════════════════════════
+const _rateCache = {}; // cache ตาม cabinet id
+
+function calcAvgRates(cfgId, cfg) {
+  if (_rateCache[cfgId]) return _rateCache[cfgId];
+
+  let totalPulls = 0, cntSpecial = 0, cntRare = 0, cntNormal = 0;
+  const ROUNDS = SIM_ROUNDS; // ใช้ค่าเดิม 5000 รอบ
+
+  for (let r = 0; r < ROUNDS; r++) {
+    let remaining = cfg.items.map((_, i) => i);
+    let pulls = 0;
+
+    while (remaining.length > 0) {
+      const drawRow = cfg.drawWeights
+        ? cfg.drawWeights[Math.min(pulls, cfg.drawWeights.length - 1)]
+        : null;
+      const pool = remaining.map(origIdx => ({
+        origIdx,
+        weight: drawRow ? drawRow[origIdx] : (cfg.items[origIdx].weight || 1)
+      }));
+      const totalW = pool.reduce((s, p) => s + p.weight, 0);
+      let rng = Math.random() * totalW, acc = 0, chosen = pool[pool.length - 1];
+      for (const p of pool) { acc += p.weight; if (rng <= acc) { chosen = p; break; } }
+
+      pulls++;
+      totalPulls++;
+      const item = cfg.items[chosen.origIdx];
+      if (item.isSpecial)     cntSpecial++;
+      else if (item.isRare)   cntRare++;
+      else                    cntNormal++;
+
+      if (item.isSpecial) remaining = [];
+      else remaining = remaining.filter(i => i !== chosen.origIdx);
+    }
+  }
+
+  const result = {
+    special: (cntSpecial / totalPulls * 100).toFixed(1),
+    rare:    (cntRare    / totalPulls * 100).toFixed(1),
+    normal:  (cntNormal  / totalPulls * 100).toFixed(1),
+  };
+  _rateCache[cfgId] = result;
+  return result;
+}
+
+// ── ล้าง cache (เผื่อใช้ตอน reset) ──
+function clearRateCache() { Object.keys(_rateCache).forEach(k => delete _rateCache[k]); }
+
+
 function runCompare(cfg, n) {
   const rounds = Math.min(n, COMPARE_MAX_PEOPLE);
   const results = [];
