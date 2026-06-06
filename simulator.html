@@ -354,7 +354,8 @@ function doPull(n) {
 
 // ── helper: สร้าง path รูปไอเทม ──
 function getItemImgPath(name) {
-  return `images/items/${name}.jpg`;
+  // encode space → %20 เพื่อให้ GitHub Pages โหลดได้
+  return `images/items/${name.replace(/ /g, '%20')}.jpg`;
 }
 
 function resetPool() {
