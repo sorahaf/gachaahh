@@ -107,7 +107,8 @@ function rollBig(cfg, st) {
     const name = unobtained[Math.floor(Math.random() * unobtained.length)];
     st.gotRares.push(name); st.pullsSinceRare = 0; st.gotFirstRare = true;
     if ([...new Set(st.gotRares)].length === allRares.length) st.gotAll = true;
-    return { name, isRare: true, isPity: true };
+    const pityItem = cfg.items.rare.find(r => r.name === name);
+    return { name, isRare: true, isPity: true, tag: pityItem?.tag };
   }
 
   if (Math.random() < cfg.rareRate) {
