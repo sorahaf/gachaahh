@@ -11,8 +11,8 @@
 <div id="bg-layer"></div>
 
 <div class="wrap">
-  <p class="portal-title">✨ Heartopia Gacha Sim ✨</p>
-  <p class="portal-sub">เลือกตู้สุ่มที่ต้องการทดสอบ </p>
+  <p class="portal-title">🎰 Heartopia Gacha Sim</p>
+  <p class="portal-sub">เลือกตู้สุ่มที่ต้องการทดสอบ ✨</p>
   <div id="portal-root"></div>
 </div>
 
@@ -27,8 +27,8 @@ const GROUP_META = {
 };
 const TYPE_BADGE = {
   big:         'Pity Pool',
-  ticket_step: 'Ticket',
-  heart_step:  'Heart'
+  ticket_step: 'Ticket Step',
+  heart_step:  'Heart Step'
 };
 
 // ── Deco bubbles ──
@@ -42,11 +42,9 @@ const TYPE_BADGE = {
   }
 })();
 
-// ── Background หน้า index 
-const INDEX_BG_URL = "https://mumu-global.fp.ps.easebar.com/file/695e03a041b253a6ff0b0e5ecg65iFY503"; 
-
+// ── Background จาก THEME_META (ใช้รูปของ theme แรกที่มี bgUrl) ──
 (function() {
-  const bgUrl = INDEX_BG_URL || Object.values(THEME_META).map(t => t.bgUrl).find(u => u);
+  const bgUrl = Object.values(THEME_META).map(t => t.bgUrl).find(u => u);
   if (!bgUrl) return;
   const img = document.createElement('img'); img.className = 'bg-img'; img.src = bgUrl;
   document.getElementById('bg-layer').appendChild(img);
@@ -109,12 +107,15 @@ function render() {
 render();
 </script>
 
-<footer style="position:relative;z-index:1;text-align:center;padding:1.5rem 1rem 2rem;margin-top:2rem;border-top:1px solid #e0e7ff;">
-  <p style="font-size:.7rem;color:#94a3b8;line-height:1.7;max-width:580px;margin:0 auto;">
+<footer style="position:relative;z-index:1;text-align:center;padding:1.5rem 1rem 2.5rem;margin-top:2rem;border-top:1px solid #e0e7ff;">
+  <p style="font-size:.68rem;color:#94a3b8;line-height:1.9;max-width:620px;margin:0 auto;">
     🎮 <strong style="color:#6b7db3">Fan-made Heartopia Gacha Simulator</strong><br>
-    This website is not affiliated with, endorsed by, or sponsored by the official Heartopia team or XD Games.<br>
-    All game assets, images, trademarks, and copyrights belong to their respective owners.<br>
-    Created for entertainment purposes only and not for profit.
+    This is an unofficial, fan-made simulator created for entertainment and statistical education purposes only.<br>
+    This website is not affiliated with, endorsed by, or sponsored by the official Heartopia team or XD Games in any way.<br>
+    All game assets, names, images, characters, trademarks, and copyrights are the property of their respective owners.<br>
+    No real money transactions occur on this site. No in-game items, currency, or benefits are sold or distributed.<br>
+    This site does not generate revenue and is operated strictly on a non-commercial basis.<br>
+    If you are a rights holder and have concerns, please contact us and we will respond promptly.
   </p>
 </footer>
 </body>
