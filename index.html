@@ -11,8 +11,8 @@
 <div id="bg-layer"></div>
 
 <div class="wrap">
-  <p class="portal-title">🎰 Heartopia Gacha Sim</p>
-  <p class="portal-sub">เลือกตู้สุ่มที่ต้องการทดสอบ ✨</p>
+  <p class="portal-title">✨ Heartopia Gacha Sim ✨</p>
+  <p class="portal-sub">เลือกตู้สุ่มที่ต้องการทดสอบ </p>
   <div id="portal-root"></div>
 </div>
 
@@ -27,8 +27,8 @@ const GROUP_META = {
 };
 const TYPE_BADGE = {
   big:         'Pity Pool',
-  ticket_step: 'Ticket Step',
-  heart_step:  'Heart Step'
+  ticket_step: 'Ticket',
+  heart_step:  'Heart'
 };
 
 // ── Deco bubbles ──
@@ -42,9 +42,11 @@ const TYPE_BADGE = {
   }
 })();
 
-// ── Background จาก THEME_META (ใช้รูปของ theme แรกที่มี bgUrl) ──
+// ── Background หน้า index 
+const INDEX_BG_URL = "https://mumu-global.fp.ps.easebar.com/file/695e03a041b253a6ff0b0e5ecg65iFY503"; 
+
 (function() {
-  const bgUrl = Object.values(THEME_META).map(t => t.bgUrl).find(u => u);
+  const bgUrl = INDEX_BG_URL || Object.values(THEME_META).map(t => t.bgUrl).find(u => u);
   if (!bgUrl) return;
   const img = document.createElement('img'); img.className = 'bg-img'; img.src = bgUrl;
   document.getElementById('bg-layer').appendChild(img);
@@ -97,7 +99,7 @@ function render() {
             <div class="banner-meta">${subNames}</div>
           </div>
           <span class="banner-type-badge">${TYPE_BADGE[info.cabinetType]||info.cabinetType}</span>
-        </a> 
+        </a>
       `);
     }
     root.appendChild(grid);
