@@ -53,6 +53,7 @@ function freshPoolState() {
     totalHeartsUsed: 0,
     history: [],
     gotRares: [],
+    gotCommons: [],     // สำหรับตู้ใหญ่: track ว่าได้ common อะไรไปแล้ว
     gotFirstRare: false,
     gotAll: false,
     weightPool: null,   // legacy (ไม่ใช้แล้ว)
@@ -121,7 +122,10 @@ function rollBig(cfg, st) {
 
   const common = cfg.items.common[Math.floor(Math.random() * cfg.items.common.length)];
   st.pullsSinceRare++;
-  return { name: common.name, isRare: false, isPity: false };
+  if (!st.gotCommons) st.gotCommons = [];
+  const dupCommon = st.gotCommons.includes(common.name);
+  st.gotCommons.push(common.name);
+  return { name: common.name, isRare: false, isPity: false, dup: dupCommon };
 }
 
 // engine: "ticket_step" / "heart_step" — weight pool, sweep on special
