@@ -566,9 +566,10 @@ function downloadStatsCard() {
 
     // clone ออกมา render นอกหน้าจอ เพื่อให้ได้ความสูงเต็ม ไม่ถูก max-height clip
     const clone = modalInner.cloneNode(true);
+    const actualWidth = modalInner.getBoundingClientRect().width;
     clone.style.cssText = `
       position:fixed; left:-9999px; top:0;
-      width:620px; max-height:none; overflow:visible;
+      width:${actualWidth}px; max-height:none; overflow:visible;
       border-radius:24px; background:#fff;
     `;
     document.body.appendChild(clone);
