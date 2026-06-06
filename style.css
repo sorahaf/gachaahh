@@ -397,13 +397,6 @@ body {
   border-radius: var(--r-lg);
   font-family: var(--font-ui);
 }
-.gacha-card-holder.is-rainbow .item-card {
-  /* เมื่ออยู่ใน rainbow holder ให้ fill เต็ม padding area */
-  position: relative;
-  inset: unset;
-  width: 100%; height: 100%;
-  flex: 1;
-}
 .item-card.rare {
   background: linear-gradient(160deg, #fdf4ff, #faf5ff);
   border-color: var(--purple);
@@ -416,39 +409,37 @@ body {
 }
 
 /* ── Rainbow border (🌈 tag & special) ── */
+/* holder กลายเป็น clip box, ::before เป็น conic หมุน, card ลอยบน z-index 1 */
 .gacha-card-holder.is-rainbow {
   padding: 3px;
-  border-radius: var(--r-lg);
-  background: transparent;
-  position: relative;
   overflow: hidden;
   display: flex;
 }
 .gacha-card-holder.is-rainbow::before {
   content: '';
   position: absolute;
-  inset: -50%;
-  width: 200%; height: 200%;
+  inset: -100%;
+  width: 300%; height: 300%;
   background: conic-gradient(
+    from 0deg,
     #ff6b6b, #ffa94d, #ffe066, #69db7c,
     #4dabf7, #9775fa, #f783ac, #ff6b6b
   );
-  animation: rbRotate 2s linear infinite;
+  animation: rbRotate 2.5s linear infinite;
   z-index: 0;
 }
 @keyframes rbRotate {
   to { transform: rotate(360deg); }
 }
-
-/* การ์ดข้างในลอยอยู่บน pseudo */
 .gacha-card-holder.is-rainbow .item-card {
   position: relative; z-index: 1;
-  background: linear-gradient(160deg, #fdf4ff, #faf5ff);
+  inset: unset; width: 100%;
   border: none;
   border-radius: calc(var(--r-lg) - 2px);
-  box-shadow: inset 0 0 20px rgba(167,139,250,.15),
-              0 0 18px rgba(167,139,250,.2);
-  inset: 3px;
+  background: linear-gradient(160deg, #fdf4ff, #faf5ff);
+}
+.gacha-card-holder.is-rainbow .item-card.rare {
+  background: linear-gradient(160deg, #fdf4ff, #faf5ff);
 }
 .gacha-card-holder.is-rainbow .item-card.special {
   background: linear-gradient(160deg, #fff8e1, #fff0f8);
