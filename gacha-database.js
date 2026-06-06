@@ -552,23 +552,23 @@ const GACHA_DATABASE = {
 // ══════════════════════════════════════════
 const THEME_META = {
   "✨ Golden Mirage": {
-    bannerUrl: "",   // ← วาง URL รูปแบนเนอร์ที่นี่
+    bannerUrl: "https://github.com/sorahaf/gachaahh/blob/main/images/Golden%20Mirage.jpg?raw=true",   // ← วาง URL รูปแบนเนอร์ที่นี่
     bgUrl:     ""    // ← วาง URL รูปพื้นหลังที่นี่ (ถ้าไม่ต้องการใส่ว่างไว้)
   },
   "🎪 Lustrous Parade": {
-    bannerUrl: "",
+    bannerUrl: "https://github.com/sorahaf/gachaahh/blob/main/images/Lustrous%20Parade.jpg?raw=true",
     bgUrl:     ""
   },
   "🎨 Graffiti Channel": {
-    bannerUrl: "",
+    bannerUrl: "https://github.com/sorahaf/gachaahh/blob/main/images/Graffiti%20Channel.jpg?raw=true",
     bgUrl:     ""
   },
   "🐻 Butter Bear": {
-    bannerUrl: "",
+    bannerUrl: "https://github.com/sorahaf/gachaahh/blob/main/images/Butter%20Bear.jpg?raw=true",
     bgUrl:     ""
   },
   "🌧️ Raindrop Song": {
-    bannerUrl: "",
+    bannerUrl: "https://github.com/sorahaf/gachaahh/blob/main/images/Raindrop%20Song.jpg?raw=true",
     bgUrl:     ""
   }
 };
