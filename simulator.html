@@ -315,14 +315,13 @@ function doPull(n) {
 
   const visible = results.filter(r => !r.isRebate);
   visible.forEach((r, i) => {
-    const cls   = r.isSpecial ? 'special' : r.isRare ? 'rare' : '';
-    const badge = r.isPity ? 'Pity ✓' : r.isSpecial ? '✨ JACKPOT' : r.isRare ? '★ Rare' : 'Normal';
-    const imgPath = getItemImgPath(r.name);
-    const dupHtml = r.dup
-      ? `<div class="dup-badge">♻️ ซ้ำ</div>`
-      : '';
+    const cls      = r.isSpecial ? 'special' : r.isRare ? 'rare' : '';
+    const isRainbow = r.isSpecial || r.tag === '🌈';
+    const badge    = r.isPity ? 'Pity ✓' : r.isSpecial ? '✨ JACKPOT' : r.isRare ? '★ Rare' : 'Normal';
+    const imgPath  = getItemImgPath(r.name);
+    const dupHtml  = r.dup ? `<div class="dup-badge">♻️ ซ้ำ</div>` : '';
     grid.insertAdjacentHTML('beforeend', `
-      <div class="gacha-card-holder" style="animation-delay:${i*.08}s">
+      <div class="gacha-card-holder ${isRainbow ? 'is-rainbow' : ''}" style="animation-delay:${i*.08}s">
         <div class="item-card ${cls}">
           <span class="badge">${badge}</span>
           <div class="item-img-wrap">
