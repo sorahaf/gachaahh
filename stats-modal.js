@@ -308,6 +308,9 @@ function buildChart(bins, stats, actualPulls, zone) {
 function buildModalHTML(cfg, actualPulls, stats, bins) {
   const isStepBox = cfg.cabinetType !== 'big';
 
+  // ── banner URL จาก THEME_META ──
+  const bannerUrl = (typeof getThemeBanner === 'function') ? getThemeBanner(cfg.theme) : '';
+
   // ── cost helper ──
   function costLabel(pulls) {
     if (cfg.cabinetType === 'big') {
@@ -348,29 +351,43 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
       max-height:92vh;overflow-y:auto;
       box-shadow:0 24px 60px rgba(79,142,247,.22);
       animation:slideUp .3s cubic-bezier(.34,1.4,.64,1);
+      overflow:hidden;
     ">
 
-      <!-- Header -->
-      <div style="
-        padding:1.2rem 1.4rem .8rem;
-        border-bottom:1.5px solid #e0e7ff;
-        display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;
-      ">
-        <div>
-          <div style="font-size:.7rem;font-weight:800;color:#94a3b8;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px">
-            สถิติการล้างตู้ · ${SIM_ROUNDS.toLocaleString()} simulations
+      <!-- Banner + Header -->
+      <div style="position:relative;border-radius:24px 24px 0 0;overflow:hidden;min-height:90px;">
+        ${bannerUrl ? `
+          <!-- รูปแบนเนอร์ -->
+          <img src="${bannerUrl}" alt="" style="
+            position:absolute;inset:0;width:100%;height:100%;
+            object-fit:cover;object-position:center top;
+            opacity:.55;filter:saturate(1.1);
+          ">
+        ` : `
+          <!-- fallback gradient ถ้าไม่มีรูป -->
+          <div style="position:absolute;inset:0;background:linear-gradient(120deg,#dbeafe,#fce7f3);"></div>
+        `}
+        <!-- fade ล่าง -->
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 20%,rgba(255,255,255,.92) 75%,#fff 100%);"></div>
+        <!-- ข้อความทับ -->
+        <div style="position:relative;z-index:1;padding:1.1rem 1.4rem .9rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;min-height:90px;">
+          <div>
+            <div style="font-size:.65rem;font-weight:800;color:#6b7db3;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px;text-shadow:0 1px 4px rgba(255,255,255,.8)">
+              สถิติการล้างตู้ · ${SIM_ROUNDS.toLocaleString()} simulations
+            </div>
+            <div style="font-size:1.05rem;font-weight:800;color:#1e2d5a;line-height:1.2;text-shadow:0 1px 6px rgba(255,255,255,.9)">
+              ${cfg.name}
+            </div>
           </div>
-          <div style="font-size:1.05rem;font-weight:800;color:#1e2d5a;line-height:1.2">
-            ${cfg.name}
-          </div>
+          <button onclick="closeStatsModal()" style="
+            background:rgba(255,255,255,.8);border:none;border-radius:50%;
+            width:32px;height:32px;cursor:pointer;flex-shrink:0;
+            display:flex;align-items:center;justify-content:center;
+            font-size:1rem;color:#64748b;
+            transition:background .15s;backdrop-filter:blur(4px);
+          " onmouseover="this.style.background='rgba(255,255,255,1)'"
+            onmouseout="this.style.background='rgba(255,255,255,.8)'">✕</button>
         </div>
-        <button onclick="closeStatsModal()" style="
-          background:#f1f5f9;border:none;border-radius:50%;
-          width:32px;height:32px;cursor:pointer;
-          display:flex;align-items:center;justify-content:center;
-          font-size:1rem;color:#64748b;flex-shrink:0;
-          transition:background .15s;
-        " onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">✕</button>
       </div>
 
       <!-- Zone badge + your result -->
@@ -463,7 +480,22 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
       </div>
 
       <!-- Footer button -->
-      <div style="padding:.2rem 1.4rem 1.2rem;">
+      <div style="padding:.2rem 1.4rem 1.2rem;display:flex;flex-direction:column;gap:.6rem;">
+        <button onclick="downloadStatsCard()" style="
+          width:100%;padding:.68rem;
+          background:linear-gradient(120deg,#a78bfa,#6366f1);
+          border:none;border-radius:var(--r-pill,999px);
+          color:#fff;font-weight:800;font-size:.88rem;
+          font-family:var(--font-ui,'Noto Sans Thai',sans-serif);
+          cursor:pointer;
+          box-shadow:0 4px 14px rgba(99,102,241,.3);
+          transition:transform .12s,box-shadow .12s;
+          display:flex;align-items:center;justify-content:center;gap:6px;
+        "
+        onmouseover="this.style.transform='translateY(-2px)'"
+        onmouseout="this.style.transform=''">
+          ⬇️ บันทึกรูปสรุป
+        </button>
         <button onclick="closeStatsModal()" style="
           width:100%;padding:.75rem;
           background:linear-gradient(120deg,#4f8ef7,#f472b6);
@@ -492,25 +524,65 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
 // Public API
 // ══════════════════════════════════════════
 
-// เรียกหลังตรวจเจอ gotAll === true
-// cfg = GACHA_DATABASE[activeId], actualPulls = st.pulls
-function showStatsModal(cfg, actualPulls) {
-  // run simulation (synchronous, ~5k rounds เร็วมาก)
-  const rawData = runSimulation(cfg);
+let _shareData = null;
 
-  // แปะค่าจริงไว้บน array สำหรับ calcStats
+function showStatsModal(cfg, actualPulls) {
+  const rawData = runSimulation(cfg);
   rawData._actual = actualPulls;
   const stats = calcStats(rawData);
   const bins  = buildBins(stats.sorted);
+  _shareData = { cfg, actualPulls, stats };
 
-  // inject modal
   const wrapper = document.createElement('div');
   wrapper.id = 'stats-modal-root';
   wrapper.innerHTML = buildModalHTML(cfg, actualPulls, stats, bins);
   document.body.appendChild(wrapper);
 }
- 
+
 function closeStatsModal() {
   const el = document.getElementById('stats-modal-root');
   if (el) el.remove();
+}
+
+// ── Download modal as PNG via html2canvas ──
+function downloadStatsCard() {
+  const modalInner = document.querySelector('#stats-modal-root [onclick="event.stopPropagation()"]');
+  if (!modalInner) return;
+
+  function doCapture() {
+    const btns = modalInner.querySelectorAll('button');
+    btns.forEach(b => b.style.visibility = 'hidden');
+
+    html2canvas(modalInner, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      onclone: (doc) => {
+        const el = doc.querySelector('#stats-modal-root [onclick="event.stopPropagation()"]');
+        if (el) el.style.maxHeight = 'none';
+      }
+    }).then(canvas => {
+      btns.forEach(b => b.style.visibility = '');
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a   = document.createElement('a');
+        a.href = url; a.download = 'fan-hearto-result.png';
+        a.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    }).catch(() => {
+      btns.forEach(b => b.style.visibility = '');
+      alert('ไม่สามารถบันทึกรูปได้ ลองอีกครั้ง');
+    });
+  }
+
+  if (typeof html2canvas === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = doCapture;
+    document.head.appendChild(s);
+  } else {
+    doCapture();
+  }
 }
