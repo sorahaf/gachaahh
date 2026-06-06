@@ -568,7 +568,7 @@ function downloadStatsCard() {
     const clone = modalInner.cloneNode(true);
     clone.style.cssText = `
       position:fixed; left:-9999px; top:0;
-      width:560px; max-height:none; overflow:visible;
+      width:620px; max-height:none; overflow:visible;
       border-radius:24px; background:#fff;
     `;
     document.body.appendChild(clone);
