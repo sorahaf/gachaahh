@@ -547,23 +547,23 @@ const GACHA_DATABASE = {
 // ══════════════════════════════════════════
 const THEME_META = {
   "✨ Golden Mirage": {
-    bannerUrl: "/images/Golden Mirage.jpg",
+    bannerUrl: "images/Golden Mirage.jpg",
     bgUrl:     ""
   },
   "🎪 Lustrous Parade": {
-    bannerUrl: "/images/Lustrous Parade.jpg",
+    bannerUrl: "images/Lustrous Parade.jpg",
     bgUrl:     ""
   },
   "🎨 Graffiti Channel": {
-    bannerUrl: "/images/Graffiti Channel.jpg",
+    bannerUrl: "images/Graffiti Channel.jpg",
     bgUrl:     ""
   },
   "🐻 Butter Bear": {
-    bannerUrl: "/images/Butter Bear.jpg",
+    bannerUrl: "images/Butter Bear.jpg",
     bgUrl:     ""
   },
   "🌧️ Raindrop Song": {
-    bannerUrl: "/images/Raindrop Song.jpg",
+    bannerUrl: "images/Raindrop Song.jpg",
     bgUrl:     ""
   }
 };
