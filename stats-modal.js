@@ -355,27 +355,25 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
     ">
 
       <!-- Banner + Header -->
-      <div style="position:relative;border-radius:24px 24px 0 0;overflow:hidden;min-height:90px;">
+      <div style="position:relative;border-radius:24px 24px 0 0;overflow:hidden;height:120px;">
         ${bannerUrl ? `
-          <!-- รูปแบนเนอร์ -->
           <img src="${bannerUrl}" alt="" style="
             position:absolute;inset:0;width:100%;height:100%;
-            object-fit:cover;object-position:center top;
-            opacity:.55;filter:saturate(1.1);
+            object-fit:cover;object-position:center 30%;
+            opacity:.6;filter:saturate(1.15);
           ">
         ` : `
-          <!-- fallback gradient ถ้าไม่มีรูป -->
           <div style="position:absolute;inset:0;background:linear-gradient(120deg,#dbeafe,#fce7f3);"></div>
         `}
         <!-- fade ล่าง -->
-        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 20%,rgba(255,255,255,.92) 75%,#fff 100%);"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 15%,rgba(255,255,255,.88) 65%,#fff 100%);"></div>
         <!-- ข้อความทับ -->
-        <div style="position:relative;z-index:1;padding:1.1rem 1.4rem .9rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;min-height:90px;">
+        <div style="position:absolute;bottom:0;left:0;right:0;z-index:1;padding:.8rem 1.4rem .9rem;display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;">
           <div>
-            <div style="font-size:.65rem;font-weight:800;color:#6b7db3;letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px;text-shadow:0 1px 4px rgba(255,255,255,.8)">
+            <div style="font-size:.65rem;font-weight:800;color:#6b7db3;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;text-shadow:0 1px 4px rgba(255,255,255,.9)">
               สถิติการล้างตู้ · ${SIM_ROUNDS.toLocaleString()} simulations
             </div>
-            <div style="font-size:1.05rem;font-weight:800;color:#1e2d5a;line-height:1.2;text-shadow:0 1px 6px rgba(255,255,255,.9)">
+            <div style="font-size:1.05rem;font-weight:800;color:#1e2d5a;line-height:1.2;text-shadow:0 1px 6px rgba(255,255,255,.95)">
               ${cfg.name}
             </div>
           </div>
@@ -479,6 +477,18 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
         </div>
       </div>
 
+      <!-- Disclaimer -->
+      <div style="padding:0 1.4rem .5rem;">
+        <div style="
+          background:#f8faff;border:1.5px solid #e0e7ff;
+          border-radius:12px;padding:.5rem .8rem;
+          font-size:.62rem;font-weight:600;color:#94a3b8;
+          line-height:1.6;text-align:center;
+        ">
+          ⚠️ Fan-made simulator for entertainment only. Rates and results may not reflect actual in-game mechanics. Play for fun! · <strong style="color:#6b7db3">#FanHeartopia</strong>
+        </div>
+      </div>
+
       <!-- Footer button -->
       <div style="padding:.2rem 1.4rem 1.2rem;display:flex;flex-direction:column;gap:.6rem;">
         <button onclick="downloadStatsCard()" style="
@@ -551,7 +561,7 @@ function downloadStatsCard() {
 
   function doCapture() {
     const btns = modalInner.querySelectorAll('button');
-    btns.forEach(b => b.style.visibility = 'hidden');
+    btns.forEach(b => { b._origDisplay = b.style.display; b.style.display = 'none'; });
 
     html2canvas(modalInner, {
       scale: 2,
@@ -560,10 +570,10 @@ function downloadStatsCard() {
       logging: false,
       onclone: (doc) => {
         const el = doc.querySelector('#stats-modal-root [onclick="event.stopPropagation()"]');
-        if (el) el.style.maxHeight = 'none';
+        if (el) { el.style.maxHeight = 'none'; el.style.overflow = 'visible'; }
       }
     }).then(canvas => {
-      btns.forEach(b => b.style.visibility = '');
+      btns.forEach(b => { b.style.display = b._origDisplay || ''; });
       canvas.toBlob(blob => {
         const url = URL.createObjectURL(blob);
         const a   = document.createElement('a');
@@ -572,7 +582,7 @@ function downloadStatsCard() {
         URL.revokeObjectURL(url);
       }, 'image/png');
     }).catch(() => {
-      btns.forEach(b => b.style.visibility = '');
+      btns.forEach(b => { b.style.display = b._origDisplay || ''; });
       alert('ไม่สามารถบันทึกรูปได้ ลองอีกครั้ง');
     });
   }
