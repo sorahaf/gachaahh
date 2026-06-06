@@ -351,11 +351,10 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
       max-height:92vh;overflow-y:auto;
       box-shadow:0 24px 60px rgba(79,142,247,.22);
       animation:slideUp .3s cubic-bezier(.34,1.4,.64,1);
-      overflow:hidden;
     ">
 
       <!-- Banner + Header -->
-      <div style="position:relative;border-radius:24px 24px 0 0;overflow:hidden;height:120px;">
+      <div style="position:relative;border-radius:24px 24px 0 0;overflow:hidden;height:120px;flex-shrink:0;">
         ${bannerUrl ? `
           <img src="${bannerUrl}" alt="" style="
             position:absolute;inset:0;width:100%;height:100%;
