@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heartopia — Gacha Simulator</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="bg-layer"></div>
+
+<div class="wrap">
+  <p class="portal-title">🎰 Heartopia Gacha Sim</p>
+  <p class="portal-sub">เลือกตู้สุ่มที่ต้องการทดสอบ ✨</p>
+  <div id="portal-root"></div>
+</div>
+
+<script src="gacha-core.js"></script>
+<script src="gacha-database.js"></script>
+<script>
+const GROUP_META = {
+  big:    { label: '🏛️ ตู้ใหญ่',      order: 0 },
+  small:  { label: '🎨 ตู้ตั๋วเล็ก',   order: 1 },
+  collab: { label: '🐻 ตู้คอลแลป',     order: 2 },
+  heart:  { label: '💜 ตู้หัวใจเล็ก',  order: 3 }
+};
+const TYPE_BADGE = {
+  big:         'Pity Pool',
+  ticket_step: 'Ticket Step',
+  heart_step:  'Heart Step'
+};
+
+// ── Deco bubbles ──
+(function() {
+  const colors = ['#ffd84a','#ff8fb2','#4db8f0','#b0e8a0','#ffc0a0','#c8d8ff'];
+  for (let i = 0; i < 12; i++) {
+    const b = document.createElement('div'); b.className = 'deco-bubble';
+    const size = 18 + Math.random() * 40;
+    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;background:${colors[i%colors.length]};opacity:.35;animation-duration:${5+Math.random()*6}s;animation-delay:-${Math.random()*6}s;`;
+    document.body.appendChild(b);
+  }
+})();
+
+// ── Background จาก THEME_META (ใช้รูปของ theme แรกที่มี bgUrl) ──
+(function() {
+  const bgUrl = Object.values(THEME_META).map(t => t.bgUrl).find(u => u);
+  if (!bgUrl) return;
+  const img = document.createElement('img'); img.className = 'bg-img'; img.src = bgUrl;
+  document.getElementById('bg-layer').appendChild(img);
+})();
+
+// ── Build structure: group → theme ──
+function buildStructure() {
+  const structure = {};
+  for (const [id, cfg] of Object.entries(GACHA_DATABASE)) {
+    const g = cfg.group, t = cfg.theme;
+    if (!structure[g]) structure[g] = {};
+    if (!structure[g][t]) structure[g][t] = { theme: t, group: g, cabinetType: cfg.cabinetType, ids: [] };
+    structure[g][t].ids.push(id);
+  }
+  return structure;
+}
+
+function render() {
+  const structure = buildStructure();
+  const root = document.getElementById('portal-root');
+  root.innerHTML = '';
+
+  const sorted = Object.entries(structure)
+    .sort(([a],[b]) => (GROUP_META[a]?.order??9) - (GROUP_META[b]?.order??9));
+
+  for (const [group, themes] of sorted) {
+    const meta = GROUP_META[group] || { label: group };
+
+    const lbl = document.createElement('div');
+    lbl.className = 'group-label';
+    lbl.textContent = meta.label;
+    root.appendChild(lbl);
+
+    const grid = document.createElement('div');
+    grid.className = 'banner-grid';
+
+    for (const [themeKey, info] of Object.entries(themes)) {
+      // ดึง bannerUrl จาก THEME_META
+      const bannerUrl = getThemeBanner(themeKey);
+      const subNames  = info.ids.map(id => GACHA_DATABASE[id]?.label || id).join(' · ');
+
+      grid.insertAdjacentHTML('beforeend', `
+        <a class="banner-card" href="simulator.html?theme=${encodeURIComponent(themeKey)}">
+          ${bannerUrl
+            ? `<img class="banner-img" src="${bannerUrl}" alt="${info.theme}">`
+            : `<div class="banner-placeholder">🎁</div>`}
+          <div class="banner-overlay"></div>
+          <div class="banner-content">
+            <div class="banner-title">${info.theme}</div>
+            <div class="banner-meta">${subNames}</div>
+          </div>
+          <span class="banner-type-badge">${TYPE_BADGE[info.cabinetType]||info.cabinetType}</span>
+        </a>
+      `);
+    }
+    root.appendChild(grid);
+  }
+}
+
+render();
+</script>
+</body>
+</html>
