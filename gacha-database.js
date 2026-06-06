@@ -325,7 +325,7 @@ const GACHA_DATABASE = {
       { name: "Graffiti Buckle Jumpsuit",             isSpecial: true  },
       { name: "Graffiti Wing Drawstring Bag",         isRare: true     },
       { name: "Graffiti Woven Bandana Cap",           isRare: true     },
-      { name: "Graffiti Braids w/ Colored Ropes",     isRare: true     },
+      { name: "Graffiti Braids w- Colored Ropes",     isRare: true     },
       { name: "Unconventional Headphones",            isRare: true     },
       { name: "Graffiti Spray Can",                   isRare: true     },
       { name: "Unconventional Outdoor Running Shoes", isRare: true     },
@@ -475,7 +475,7 @@ const GACHA_DATABASE = {
       { name: "Light Jellyfish Rain Hat",            isRare: true     },
       { name: "Playful Spiral Curls",                isRare: true     },
       { name: "Teardrop Bellflower Umbrella",        isRare: true     },
-      { name: "Jellyfish Sun Hat w/ Bow",            isRare: true     },
+      { name: "Jellyfish Sun Hat w- Bow",            isRare: true     },
       { name: "Light Jellyfish Backpack",            isRare: true     },
       { name: "Light Jellyfish Gloves",              isRare: true     },
       { name: "Fish Raindrop Rain Boots",            isRare: true     },
@@ -546,29 +546,29 @@ const GACHA_DATABASE = {
 // bgUrl     : รูปพื้นหลังทั้งเว็บ (ใส่ได้ต่อ theme หรือจะใช้ตัวเดียวกันก็ได้)
 //
 // วิธีหา URL:
-//   GitHub  → อัปไฟล์ใน repo แล้วใช้  https://raw.githubusercontent.com/<user>/<repo>/main/images/<file> ==>images/
+//   GitHub  → อัปไฟล์ใน repo แล้วใช้  https://raw.githubusercontent.com/<user>/<repo>/main/images/<file>
 //   Imgur   → คลิกขวารูป "Copy image address"
 //   อื่นๆ   → URL ตรงไปที่ไฟล์ภาพ (.jpg/.png/.webp)
 // ══════════════════════════════════════════
 const THEME_META = {
   "✨ Golden Mirage": {
-    bannerUrl: "images/Golden%20Mirage.jpg",   // ← วาง URL รูปแบนเนอร์ที่นี่
+    bannerUrl: "",   // ← วาง URL รูปแบนเนอร์ที่นี่
     bgUrl:     ""    // ← วาง URL รูปพื้นหลังที่นี่ (ถ้าไม่ต้องการใส่ว่างไว้)
   },
   "🎪 Lustrous Parade": {
-    bannerUrl: "images/Lustrous%20Parade.jpg",
+    bannerUrl: "",
     bgUrl:     ""
   },
   "🎨 Graffiti Channel": {
-    bannerUrl: "images/Graffiti%20Channel.jpg",
+    bannerUrl: "",
     bgUrl:     ""
   },
   "🐻 Butter Bear": {
-    bannerUrl: "images/Butter%20Bear.jpg",
+    bannerUrl: "",
     bgUrl:     ""
   },
   "🌧️ Raindrop Song": {
-    bannerUrl: "images/Raindrop%20Song.jpg",
+    bannerUrl: "",
     bgUrl:     ""
   }
 };
