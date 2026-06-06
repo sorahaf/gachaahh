@@ -215,7 +215,7 @@ function updateUI() {
     `;
   } else {
     const total = cfg.items.length;
-    const left  = st.weightPool ? st.weightPool.length : total;
+    const left  = st.remainingIdx ? st.remainingIdx.length : total;
     chips += `
       <div class="info-chip good"><div class="v">${total-left}/${total}</div><div class="l">ได้รับแล้ว</div></div>
       <div class="info-chip ${left<=2?'warn':''}"><div class="v">${left}</div><div class="l">เหลือในตู้</div></div>
@@ -238,7 +238,7 @@ function renderDebug(cfg, st) {
       <div class="debug-box" style="border-left-color:var(--pink)"><b>Guarantee:</b> ${cfg.guarantee1} ครั้งแรก / ${cfg.guarantee2} ถัดไป</div>
     `;
   } else {
-    const total = cfg.items.length, left = st.weightPool ? st.weightPool.length : total;
+    const total = cfg.items.length, left = st.remainingIdx ? st.remainingIdx.length : total;
     const sp = cfg.items.find(i => i.isSpecial);
     html = `
       <div class="debug-box"><b>Engine:</b> Weight Step · ${cfg.name}</div>
@@ -353,5 +353,14 @@ function resetAllState() {
 renderSubBtns();
 updateUI();
 </script>
+
+<footer style="position:relative;z-index:1;text-align:center;padding:1.5rem 1rem 2rem;margin-top:2rem;border-top:1px solid #e0e7ff;">
+  <p style="font-size:.7rem;color:#94a3b8;line-height:1.7;max-width:580px;margin:0 auto;">
+    🎮 <strong style="color:#6b7db3">Fan-made Heartopia Gacha Simulator</strong><br>
+    This website is not affiliated with, endorsed by, or sponsored by the official Heartopia team or XD Games.<br>
+    All game assets, images, trademarks, and copyrights belong to their respective owners.<br>
+    Created for entertainment purposes only and not for profit.
+  </p>
+</footer>
 </body>
 </html>
