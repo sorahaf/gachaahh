@@ -409,4 +409,22 @@ function resetAllState() {
 renderSubBtns();
 updateUI();
 applyI18n();
-renderLangSwitc
+renderLangSwitcher('lang-switcher');
+
+// pre-warm rate cache ของตู้แรกที่โหลด
+(function() {
+  const cfg = GACHA_DATABASE[activeId];
+  if (cfg.cabinetType !== 'big') setTimeout(() => { calcAvgRates(activeId, cfg); updateUI(); }, 100);
+})();
+</script>
+
+<footer style="position:relative;z-index:1;text-align:center;padding:1.5rem 1rem 2rem;margin-top:2rem;border-top:1px solid #e0e7ff;">
+  <p style="font-size:.7rem;color:#94a3b8;line-height:1.7;max-width:580px;margin:0 auto;">
+    🎮 <strong style="color:#6b7db3">Fan-made Heartopia Gacha Simulator</strong><br>
+    This website is not affiliated with, endorsed by, or sponsored by the official Heartopia team or XD Games.<br>
+    All game assets, images, trademarks, and copyrights belong to their respective owners.<br>
+    Created for entertainment purposes only and not for profit.
+  </p>
+</footer>
+</body>
+</html>
