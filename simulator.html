@@ -201,7 +201,7 @@ function updateUI() {
   const thb = calculateTHBCost(st.totalHeartsUsed);
   let chips = `
     <div class="info-chip"><div class="v">${st.pulls}</div><div class="l">สุ่มสะสม</div></div>
-    <div class="info-chip hearts"><div class="v">${cfg.cabinetType === 'ticket_step' ? `🎟️ ${(st.totalHeartsUsed / cfg.heartMultiplier).toLocaleString()} ตั๋ว` : `💙 ${st.totalHeartsUsed.toLocaleString()}`}</div><div class="l">${cfg.cabinetType === 'ticket_step' ? `(${st.totalHeartsUsed.toLocaleString()} 💜)` : 'หัวใจสุทธิ'}</div></div>
+    <div class="info-chip hearts"><div class="v">${cfg.cabinetType === 'heart_step' ? `💙 ${st.totalHeartsUsed.toLocaleString()}` : `🎟️ ${(st.totalHeartsUsed / cfg.heartMultiplier).toLocaleString()} ตั๋ว`}</div><div class="l">${cfg.cabinetType === 'heart_step' ? 'หัวใจสุทธิ' : `(${st.totalHeartsUsed.toLocaleString()} 💜)`}</div></div>
     <div class="info-chip thb"><div class="v">฿${thb.toLocaleString()}</div><div class="l">บาทสะสม</div></div>
   `;
   if (cfg.cabinetType === 'big') {
