@@ -196,7 +196,7 @@ function getNextCostHearts(cfg, pulls) {
 // ── แสดงค่าใช้จ่ายเป็น "ตั๋ว" หรือ "หัวใจ" ──
 function getNextCostDisplay(cfg, pulls) {
   if (cfg.cabinetType === 'big') {
-    return `${cfg.costPerPull} ตั๋ว`;
+    return `${cfg.costPerPull} ${t('unitTicket')}`;
   }
   if (cfg.cabinetType === 'heart_step') {
     const step = Math.min(pulls, cfg.costMap.length - 1);
@@ -204,5 +204,5 @@ function getNextCostDisplay(cfg, pulls) {
   }
   // ticket_step
   const step = Math.min(pulls, cfg.costMap.length - 1);
-  return `${cfg.costMap[step]} ตั๋ว`;
+  return `${cfg.costMap[step]} ${t('unitTicket')}`;
 }
