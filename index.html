@@ -28,9 +28,9 @@ const GROUP_META = {
   heart:  { label: () => t('groupHeart'),  order: 3 }
 };
 const TYPE_BADGE = {
-  big: t('badgePityPool'),
-  ticket_step: t('badgeTicketStep'),
-  heart_step: t('badgeHeartStep')
+  big:         () => t('badgePityPool'),
+  ticket_step: () => t('badgeTicketStep'),
+  heart_step:  () => t('badgeHeartStep')
 };
 
 // ── Deco bubbles ──
@@ -98,7 +98,7 @@ function render() {
             <div class="banner-title">${info.theme}</div>
             <div class="banner-meta">${subNames}</div>
           </div>
-          <span class="banner-type-badge">${TYPE_BADGE[info.cabinetType]||info.cabinetType}</span>
+          <span class="banner-type-badge">${(TYPE_BADGE[info.cabinetType]?.() ?? info.cabinetType)}</span>
         </a>
       `);
     }
