@@ -69,7 +69,7 @@ function simulateStepPool(cfg) {
       let chosen = pool[pool.length - 1];
       for (const p of pool) {
         acc += p.weight;
-        if (rng <= acc) { chosen = p; break; }
+        if (rng < acc) { chosen = p; break; }
       }
 
       pulls++;
@@ -94,13 +94,19 @@ function runSimulation(cfg) {
 // ══════════════════════════════════════════
 // Statistics helpers
 // ══════════════════════════════════════════
-function calcStats(data) {
+function calcStats(data, actual) {
   const sorted = [...data].sort((a, b) => a - b);
   const n      = sorted.length;
   const mean   = data.reduce((s, v) => s + v, 0) / n;
   const variance = data.reduce((s, v) => s + (v - mean) ** 2, 0) / n;
   const sd     = Math.sqrt(variance);
-  const median = sorted[Math.floor(n / 2)];
+
+  // Bug 3.2 fix: median ถูกต้องสำหรับทั้ง n คี่และน คู่
+  const mid    = Math.floor(n / 2);
+  const median = n % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+
   const p10    = sorted[Math.floor(n * 0.10)];
   const p25    = sorted[Math.floor(n * 0.25)];
   const p75    = sorted[Math.floor(n * 0.75)];
@@ -108,8 +114,11 @@ function calcStats(data) {
   const min    = sorted[0];
   const max    = sorted[n - 1];
 
-  // percentile rank ของค่าจริง
-  const rank   = sorted.filter(v => v <= data._actual).length / n * 100;
+  // Bug 3.1 fix: actual ส่งเข้ามาตรง ๆ ไม่อ่านจาก data._actual ที่หายตอน spread
+  const _actual = actual != null ? actual : data._actual;
+  const rank    = _actual != null
+    ? sorted.filter(v => v <= _actual).length / n * 100
+    : 0;
 
   return { mean, sd, median, p10, p25, p75, p90, min, max, rank, sorted };
 }
@@ -540,8 +549,7 @@ let _shareData = null;
 
 function showStatsModal(cfg, actualPulls) {
   const rawData = runSimulation(cfg);
-  rawData._actual = actualPulls;
-  const stats = calcStats(rawData);
+  const stats = calcStats(rawData, actualPulls);  // ส่ง actual ตรงๆ
   const bins  = buildBins(stats.sorted);
   _shareData = { cfg, actualPulls, stats };
 
