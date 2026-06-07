@@ -82,7 +82,23 @@ const LANGS = {
     zoneBadLucky:     'โชคร้ายกว่าเพื่อน 😅',
     zoneSuperBad:     'โชคร้ายมากก 😭',
 
-    // compare-modal.js
+    // simulator.html — debug panel labels
+    debugEngine:         'Engine',
+    debugRareRate:       'Rare Rate',
+    debugCommonRate:     'Common Rate',
+    debugGuaranteeLabel: 'Guarantee',
+    debugSpecialAvg:     'Special avg',
+    debugRareAvg:        'Rare avg',
+    debugNormalAvg:      'Normal avg',
+
+    // compare stat row labels
+    compareRowMean:   'Mean',
+    compareRowMedian: 'Median',
+    compareRowSD:     'SD',
+    compareRowMin:    'Min',
+    compareRowMax:    'Max',
+
+    // compare-modal.js (th)
     compareTitle:     'เปรียบเทียบการกระจาย',
     compareSysLabel:  (rounds) => `ระบบ (${rounds.toLocaleString()} รอบ)`,
     compareUserLabel: (n) => `จำลองคน (${n.toLocaleString()} คน)`,
@@ -177,6 +193,22 @@ const LANGS = {
     zoneBadLucky:     'Unluckier Than Most 😅',
     zoneSuperBad:     'Really Unlucky 😭',
 
+    // simulator.html — debug panel labels
+    debugEngine:         'Engine',
+    debugRareRate:       'Rare Rate',
+    debugCommonRate:     'Common Rate',
+    debugGuaranteeLabel: 'Guarantee',
+    debugSpecialAvg:     'Special avg',
+    debugRareAvg:        'Rare avg',
+    debugNormalAvg:      'Normal avg',
+
+    // compare stat row labels
+    compareRowMean:   'Mean',
+    compareRowMedian: 'Median',
+    compareRowSD:     'SD',
+    compareRowMin:    'Min',
+    compareRowMax:    'Max',
+
     // compare-modal.js
     compareTitle:     'Distribution Comparison',
     compareSysLabel:  (rounds) => `System (${rounds.toLocaleString()} rounds)`,
@@ -249,4 +281,15 @@ function switchLang(lang) {
   // re-render dynamic UI if available
   if (typeof render === 'function') render();         // index.html
   if (typeof updateUI === 'function') updateUI();     // simulator.html
+  // re-render stats modal ถ้าเปิดอยู่
+  if (typeof _shareData !== 'undefined' && _shareData &&
+      document.getElementById('stats-modal-root')) {
+    closeStatsModal();
+    showStatsModal(_shareData.cfg, _shareData.actualPulls);
+  }
+  // re-render compare modal ถ้าเปิดอยู่
+  if (typeof _compareCfg !== 'undefined' && _compareCfg &&
+      document.getElementById('compare-modal-root')) {
+    rerunCompare();
+  }
 }
