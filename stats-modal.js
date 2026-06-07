@@ -148,11 +148,11 @@ function buildBins(sorted) {
 
 // ── zone ของตัวเลขจริง ──
 function getZone(rank) {
-  if (rank <= 10)  return { label: 'โชคดีมาก! 🍀',    color: '#34d399', bg: '#d1fae5' };
-  if (rank <= 25)  return { label: 'โชคดีกว่าคนส่วนใหญ่ 😊', color: '#60a5fa', bg: '#dbeafe' };
-  if (rank <= 75)  return { label: 'ปกติธรรมดา 😌',     color: '#a78bfa', bg: '#f3e8ff' };
-  if (rank <= 90)  return { label: 'โชคร้ายกว่าเพื่อน 😅', color: '#fb923c', bg: '#ffedd5' };
-  return            { label: 'โชคร้ายมากก 😭',          color: '#f87171', bg: '#fee2e2' };
+  if (rank <= 10)  return { label: t('zoneSuperLucky'),    color: '#34d399', bg: '#d1fae5' };
+  if (rank <= 25)  return { label: t('zoneGoodLucky'), color: '#60a5fa', bg: '#dbeafe' };
+  if (rank <= 75)  return { label: t('zoneNormal'),     color: '#a78bfa', bg: '#f3e8ff' };
+  if (rank <= 90)  return { label: t('zoneBadLucky'), color: '#fb923c', bg: '#ffedd5' };
+  return            { label: t('zoneSuperBad'),          color: '#f87171', bg: '#fee2e2' };
 }
 
 // ══════════════════════════════════════════
@@ -275,7 +275,7 @@ function buildChart(bins, stats, actualPulls, zone) {
           stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" opacity=".7"/>
     <text x="${xMedian}" y="${PAD.t - 3}" text-anchor="middle"
           font-size="9" fill="#a78bfa" font-weight="700" font-family="monospace">
-      ค่ากลาง ${stats.median}
+      ${t('statsMedianLabel', stats.median)}
     </text>
 
     <!-- actual marker -->
@@ -291,7 +291,7 @@ function buildChart(bins, stats, actualPulls, zone) {
           width="40" height="14" rx="7" fill="${zone.color}"/>
     <text x="${Math.min(Math.max(xActual, PAD.l + 20), PAD.l + cW - 20)}" y="${PAD.t - 8}"
           text-anchor="middle" font-size="9" fill="white" font-weight="800" font-family="monospace">
-      ${actualPulls} ครั้ง
+      ${t('statsPulls', actualPulls)}
     </text>
 
     <!-- x-axis -->
@@ -330,11 +330,11 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
   const chart = buildChart(bins, stats, actualPulls, zone);
 
   const statRows = [
-    { label: 'ค่าเฉลี่ย (Mean)',   val: stats.mean.toFixed(1) + ' ครั้ง' },
-    { label: 'ค่ากลาง (Median)',   val: stats.median + ' ครั้ง' },
-    { label: 'เบี่ยงเบน (SD)',      val: '± ' + stats.sd.toFixed(1) },
-    { label: 'โชคดีสุด (P10)',     val: '≤ ' + stats.p10 + ' ครั้ง' },
-    { label: 'โชคร้ายสุด (P90)',   val: '≥ ' + stats.p90 + ' ครั้ง' },
+    { label: t('statRowMean'),   val: stats.mean.toFixed(1) + ' ' + t('statValPulls', '').replace(/^\d+/, '') },
+    { label: t('statRowMedian'),   val: stats.median + ' ' + t('statValPulls', '').replace(/^\d+/, '') },
+    { label: t('statRowSD'),      val: '± ' + stats.sd.toFixed(1) },
+    { label: t('statRowP10'),     val: '≤ ' + stats.p10 + ' ' + t('statValPulls', '').replace(/^\d+/, '') },
+    { label: t('statRowP90'),   val: '≥ ' + stats.p90 + ' ' + t('statValPulls', '').replace(/^\d+/, '') },
   ];
 
   return `
@@ -374,7 +374,7 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
         <div style="position:absolute;bottom:0;left:0;right:0;z-index:1;padding:.8rem 1.4rem .9rem;display:flex;align-items:flex-end;justify-content:space-between;gap:.5rem;">
           <div style="min-width:0;flex:1;">
             <div style="font-size:.65rem;font-weight:800;color:#6b7db3;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px;text-shadow:0 1px 4px rgba(255,255,255,.9);white-space:nowrap;">
-              สถิติการล้างตู้ · ${SIM_ROUNDS.toLocaleString()} simulations
+              ${t('statsTitle', SIM_ROUNDS)}
             </div>
             <div style="font-size:1.05rem;font-weight:800;color:#1e2d5a;line-height:1.2;text-shadow:0 1px 6px rgba(255,255,255,.95);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
               ${cfg.name}
@@ -401,10 +401,10 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
           flex:1;min-width:160px;
         ">
           <div style="font-size:.65rem;font-weight:800;color:${zone.color};letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px">
-            ผลของคุณ
+            ${t('statsYourResult')}
           </div>
           <div style="font-size:1.75rem;font-weight:900;color:${zone.color};font-family:'Sora',monospace;line-height:1">
-            ${actualPulls} ครั้ง
+            ${t('statsPulls', actualPulls)}
           </div>
           <div style="font-size:.72rem;font-weight:700;color:${zone.color};margin-top:4px;opacity:.85">
             ${zone.label}
@@ -414,7 +414,7 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
         <div style="flex:2;min-width:160px;">
           <!-- percentile bar -->
           <div style="font-size:.7rem;font-weight:700;color:#64748b;margin-bottom:5px">
-            คุณอยู่ใน Top <span style="color:${zone.color};font-size:.88rem;font-weight:900">${stats.rank.toFixed(0)}%</span> แรก
+            ${t('statsTopPct', stats.rank.toFixed(0))}
           </div>
           <div style="background:#e0e7ff;border-radius:99px;height:10px;overflow:hidden;">
             <div style="
@@ -425,7 +425,7 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
             "></div>
           </div>
           <div style="display:flex;justify-content:space-between;font-size:.63rem;color:#94a3b8;font-weight:600;margin-top:3px;">
-            <span>โชคดีสุด</span><span>โชคร้ายสุด</span>
+            <span>${t('statsLucky')}</span><span>${t('statsUnlucky')}</span>
           </div>
         </div>
       </div>
@@ -433,18 +433,18 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
       <!-- Chart -->
       <div style="padding:.2rem 1.1rem .6rem;">
         <div style="font-size:.68rem;font-weight:800;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem;padding-left:.3rem">
-          การกระจาย — จำนวนครั้งที่ใช้จนครบตู้
+          ${t('statsDistTitle')}
         </div>
         <div style="background:#f8faff;border:1.5px solid #dde6ff;border-radius:14px;padding:.8rem .6rem .4rem;">
           ${chart}
           <div style="display:flex;gap:1rem;margin-top:.5rem;padding:0 .3rem;flex-wrap:nowrap;">
             <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:#64748b;white-space:nowrap;">
-              <span style="display:inline-block;width:14px;height:3px;background:#4f8ef7;border-radius:2px;flex-shrink:0"></span>Distribution
+              <span style="display:inline-block;width:14px;height:3px;background:#4f8ef7;border-radius:2px;flex-shrink:0"></span>${t('statsLegendDist')}
             </span>
             <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:#a78bfa;white-space:nowrap;">
-              <span style="display:inline-block;width:14px;height:2px;background:#a78bfa;border-radius:2px;border-top:2px dashed #a78bfa;flex-shrink:0"></span>ค่ากลาง
+              <span style="display:inline-block;width:14px;height:2px;background:#a78bfa;border-radius:2px;border-top:2px dashed #a78bfa;flex-shrink:0"></span>${t('statsLegendMed')}
             </span>
-            <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:${zone.color};white-space:nowrap;">              <span style="display:inline-block;width:10px;height:10px;background:${zone.color};border-radius:50%;"></span>ผลของคุณ
+            <span style="display:flex;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:${zone.color};white-space:nowrap;">              <span style="display:inline-block;width:10px;height:10px;background:${zone.color};border-radius:50%;"></span>${t('statsLegendYours')}
             </span>
           </div>
         </div>
@@ -473,7 +473,7 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
             border-radius:12px;padding:.45rem .7rem;
             grid-column:1/-1;
           ">
-            <div style="font-size:.62rem;font-weight:700;color:#6b7db3">ต้นทุนของคุณรอบนี้</div>
+            <div style="font-size:.62rem;font-weight:700;color:#6b7db3">${t('statRowCost')}</div>
             <div style="font-size:.88rem;font-weight:800;color:#1e2d5a;font-family:'Sora',monospace">${costLabel(actualPulls)}</div>
           </div>
         </div>
@@ -506,7 +506,7 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
         "
         onmouseover="this.style.transform='translateY(-2px)'"
         onmouseout="this.style.transform=''">
-          ⬇️ บันทึกรูปสรุป
+          ${t('btnSaveCard')}
         </button>
         <button onclick="closeStatsModal()" style="
           width:100%;padding:.75rem;
@@ -521,7 +521,7 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 7px 20px rgba(79,142,247,.35)'"
         onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(79,142,247,.3)'"
         onmousedown="this.style.transform='translateY(2px)'"
-        >ปิด</button>
+        >${t('btnClose')}</button>
       </div>
     </div>
   </div>
@@ -589,7 +589,7 @@ function downloadStatsCard() {
       }).catch(() => {
         document.body.removeChild(clone);
         btns.forEach(b => { b.style.display = b._origDisplay || ''; });
-        alert('ไม่สามารถบันทึกรูปได้ ลองอีกครั้ง');
+        alert(t('saveError'));
       });
     }, 300); // รอให้ font/image โหลด
   }
