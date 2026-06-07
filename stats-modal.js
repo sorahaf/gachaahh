@@ -31,8 +31,10 @@ function simulateBig(cfg) {
       } else if (Math.random() < cfg.rareRate) {
         gotFirstRare = true;
         const pick = cfg.items.rare[Math.floor(Math.random() * cfg.items.rare.length)];
+        const wasDup = gotRares.has(pick.name);
         gotRares.add(pick.name);
-        pullsSinceRare = 0;
+        if (!wasDup) pullsSinceRare = 0;  // ได้ใหม่: reset pity
+        else         pullsSinceRare++;     // ได้ซ้ำ: นับต่อ (ตรงกับ gacha-core.js)
       } else {
         pullsSinceRare++;
       }
