@@ -87,8 +87,11 @@ function simOnceBig(cfg) {
       pullsSinceRare = 0; gotFirstRare = true;
     } else if (Math.random() < cfg.rareRate) {
       gotFirstRare = true;
-      gotRares.add(cfg.items.rare[Math.floor(Math.random() * cfg.items.rare.length)].name);
-      pullsSinceRare = 0;
+      const pick = cfg.items.rare[Math.floor(Math.random() * cfg.items.rare.length)].name;
+      const wasDup = gotRares.has(pick);
+      gotRares.add(pick);
+      if (!wasDup) pullsSinceRare = 0;  // ได้ใหม่: reset pity
+      else         pullsSinceRare++;     // ได้ซ้ำ: นับต่อ
     } else { pullsSinceRare++; }
   }
   return pulls;
