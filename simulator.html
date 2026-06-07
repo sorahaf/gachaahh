@@ -13,8 +13,9 @@
 <div class="wrap">
 
   <div class="nav">
-    <a class="back" href="index.html">← หน้าหลัก</a>
-    <h1 id="cabinet-title">กำลังโหลด...</h1>
+    <a class="back" href="index.html">← <span data-i18n="navBack"></span></a>
+    <div id="lang-switcher" style="display:inline-flex;gap:6px;margin-left:auto"></div>
+    <h1 id="cabinet-title"></h1>
   </div>
 
   <!-- Banner -->
@@ -25,7 +26,7 @@
 
   <!-- Sub-box selector -->
   <div class="selector-block">
-    <div class="selector-title">🗂️ เลือกตู้ย่อย</div>
+    <div class="selector-title">🗂️ <span data-i18n="selectCabinet"></span></div>
     <div class="flex-buttons" id="sub-btns"></div>
   </div>
 
@@ -35,40 +36,41 @@
   <!-- Pull buttons -->
   <div class="pull-area">
     <button class="pull-btn pull1"  id="btn1"  onclick="doPull(1)">
-      🎲 สุ่ม 1 ครั้ง
+      <span data-i18n="pull1"></span>
       <span class="cost-tag" id="cost1"></span>
     </button>
     <button class="pull-btn pull10" id="btn10" onclick="doPull(10)">
-      🎰 สุ่ม 10 ครั้ง
+      <span data-i18n="pull10"></span>
       <span class="cost-tag" id="cost10"></span>
     </button>
-    <button class="pull-btn reset-pull" onclick="resetPool()">🔄 รีเซ็ต</button>
-    <button class="pull-btn compare-btn" onclick="openCompare()">📊 เปรียบเทียบ</button>
+    <button class="pull-btn reset-pull" onclick="resetPool()"><span data-i18n="btnReset"></span></button>
+    <button class="pull-btn compare-btn" onclick="openCompare()"><span data-i18n="btnCompare"></span></button>
   </div>
 
   <!-- Stage -->
   <div class="stage" id="stage">
-    <div class="stage-empty" id="stage-empty">💙 กดปุ่มสุ่มเพื่อเริ่มต้น</div>
+    <div class="stage-empty" id="stage-empty"><span data-i18n="stagePlaceholder"></span></div>
     <div class="card-grid" id="card-grid" style="display:none"></div>
   </div>
 
   <!-- Debug -->
   <div class="debug-panel">
     <div class="debug-title">
-      <span>📊 อัตราสุ่ม (Debug)</span>
-      <button class="btn-danger" onclick="resetAllState()">🚨 รีเซ็ตทุกตู้</button>
+      <span><span data-i18n="debugTitle"></span></span>
+      <button class="btn-danger" onclick="resetAllState()"><span data-i18n="btnResetAll"></span></button>
     </div>
     <div class="debug-grid" id="debug-grid"></div>
   </div>
 
   <!-- History -->
   <details class="history-bar" open style="margin-top:.75rem">
-    <summary>📜 ประวัติการสุ่มตู้นี้</summary>
+    <summary><span data-i18n="historyTitle"></span></summary>
     <div class="hist-row" id="hist-row"></div>
   </details>
 
 </div>
 
+<script src="i18n.js"></script>
 <script src="gacha-core.js"></script>
 <script src="gacha-database.js"></script>
 <script src="stats-modal.js"></script>
@@ -100,7 +102,7 @@ const themeKey = params.get('theme') || '';
 const THEME_BOXES = Object.entries(GACHA_DATABASE)
   .filter(([,cfg]) => cfg.theme === themeKey)
   .map(([id,cfg]) => ({ id, ...cfg }));
-if (!THEME_BOXES.length) { alert('ไม่พบตู้นี้'); location.href = 'index.html'; }
+if (!THEME_BOXES.length) { alert(t('cabinetNotFound')); location.href = 'index.html'; }
 
 let activeId    = THEME_BOXES[0].id;
 let globalState = loadGlobalState();
@@ -186,23 +188,23 @@ function updateUI() {
   // cost
   const maxDraws = cfg.costMap ? cfg.costMap.length : null;
   const isDone   = st.gotAll || (maxDraws && st.pulls >= maxDraws);
-  document.getElementById('cost1').textContent = isDone ? 'ล้างตู้แล้ว' : getNextCostDisplay(cfg, st.pulls);
+  document.getElementById('cost1').textContent = isDone ? t('cabinetCleared') : getNextCostDisplay(cfg, st.pulls);
   document.getElementById('btn1').disabled = isDone;
 
   const btn10 = document.getElementById('btn10');
   if (cfg.cabinetType === 'big') {
     btn10.style.display = '';
     document.getElementById('cost10').textContent =
-      `${cfg.costPerPull*10} ตั๋ว (${cfg.costPerPull*10*cfg.heartMultiplier} 💜)`;
+      `${cfg.costPerPull*10} tickets (${cfg.costPerPull*10*cfg.heartMultiplier} 💜)`;
     btn10.disabled = isDone;
   } else { btn10.style.display = 'none'; }
 
   // chips
   const thb = calculateTHBCost(st.totalHeartsUsed);
   let chips = `
-    <div class="info-chip"><div class="v">${st.pulls}</div><div class="l">สุ่มสะสม</div></div>
-    <div class="info-chip hearts"><div class="v">${cfg.cabinetType === 'heart_step' ? `💙 ${st.totalHeartsUsed.toLocaleString()}` : `🎟️ ${(st.totalHeartsUsed / cfg.heartMultiplier).toLocaleString()} ตั๋ว`}</div><div class="l">${cfg.cabinetType === 'heart_step' ? 'หัวใจสุทธิ' : `(${st.totalHeartsUsed.toLocaleString()} 💜)`}</div></div>
-    <div class="info-chip thb"><div class="v">฿${thb.toLocaleString()}</div><div class="l">บาทสะสม</div></div>
+    <div class="info-chip"><div class="v">${st.pulls}</div><div class="l">${t('chipPulls')}</div></div>
+    <div class="info-chip hearts"><div class="v">${cfg.cabinetType === 'heart_step' ? `💙 ${st.totalHeartsUsed.toLocaleString()}` : t('chipTickets', (st.totalHeartsUsed / cfg.heartMultiplier).toLocaleString())}</div><div class="l">${cfg.cabinetType === 'heart_step' ? t('chipHearts') : `(${st.totalHeartsUsed.toLocaleString()} 💜)`}</div></div>
+    <div class="info-chip thb"><div class="v">฿${thb.toLocaleString()}</div><div class="l">${t('chipTHB')}</div></div>
   `;
   if (cfg.cabinetType === 'big') {
     const limit = st.gotFirstRare ? cfg.guarantee2 : cfg.guarantee1;
@@ -211,19 +213,19 @@ function updateUI() {
     chips += `
       <div class="info-chip ${rem<=5?'warn':''}">
         <div class="v">${st.pullsSinceRare}<span style="font-size:.65rem;color:var(--text-muted)">/${limit}</span></div>
-        <div class="l">Pity (อีก ${rem})</div>
+        <div class="l">${t('chipPity', st.pullsSinceRare, limit, rem)}</div>
       </div>
-      <div class="info-chip good"><div class="v">${uR}/${cfg.items.rare.length}</div><div class="l">Rare ไม่ซ้ำ</div></div>
+      <div class="info-chip good"><div class="v">${uR}/${cfg.items.rare.length}</div><div class="l">${t('chipRare')}</div></div>
     `;
   } else {
     const total = cfg.items.length;
     const left  = st.remainingIdx ? st.remainingIdx.length : total;
     chips += `
-      <div class="info-chip good"><div class="v">${total-left}/${total}</div><div class="l">ได้รับแล้ว</div></div>
-      <div class="info-chip ${left<=2?'warn':''}"><div class="v">${left}</div><div class="l">เหลือในตู้</div></div>
+      <div class="info-chip good"><div class="v">${total-left}/${total}</div><div class="l">${t('chipObtained')}</div></div>
+      <div class="info-chip ${left<=2?'warn':''}"><div class="v">${left}</div><div class="l">${t('chipRemaining')}</div></div>
     `;
   }
-  if (st.gotAll) chips += `<div class="info-chip cleared"><div class="v">🎉 เคลียร์ตู้สมบูรณ์!</div></div>`;
+  if (st.gotAll) chips += `<div class="info-chip cleared"><div class="v">${t('chipCleared')}</div></div>`;
   document.getElementById('info-bar').innerHTML = chips;
 
   renderDebug(cfg, st);
@@ -235,9 +237,9 @@ function renderDebug(cfg, st) {
   if (cfg.cabinetType === 'big') {
     html = `
       <div class="debug-box"><b>Engine:</b> Pity Pool · ${cfg.name}</div>
-      <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>Rare Rate:</b> ${(cfg.rareRate*100).toFixed(1)}% (${cfg.items.rare.length} ชิ้น)</div>
-      <div class="debug-box" style="border-left-color:var(--blue)"><b>Common Rate:</b> ${((1-cfg.rareRate)*100).toFixed(1)}% (${cfg.items.common.length} ชิ้น)</div>
-      <div class="debug-box" style="border-left-color:var(--pink)"><b>Guarantee:</b> ${cfg.guarantee1} ครั้งแรก / ${cfg.guarantee2} ถัดไป</div>
+      <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>Rare Rate:</b> ${(cfg.rareRate*100).toFixed(1)}% (${cfg.items.rare.length} items)</div>
+      <div class="debug-box" style="border-left-color:var(--blue)"><b>Common Rate:</b> ${((1-cfg.rareRate)*100).toFixed(1)}% (${cfg.items.common.length} items)</div>
+      <div class="debug-box" style="border-left-color:var(--pink)"><b>Guarantee:</b> ${t('debugGuarantee', cfg.guarantee1, cfg.guarantee2)}</div>
     `;
   } else {
     const total = cfg.items.length, left = st.remainingIdx ? st.remainingIdx.length : total;
@@ -248,10 +250,10 @@ function renderDebug(cfg, st) {
 
     html = `
       <div class="debug-box"><b>Engine:</b> Weight Step · ${cfg.name}</div>
-      <div class="debug-box" style="border-left-color:var(--teal)"><b>ไอเทมคงเหลือ:</b> ${left} / ${total}</div>
+      <div class="debug-box" style="border-left-color:var(--teal)"><b>${t('debugItemsLeft')}:</b> ${left} / ${total}</div>
       <div class="debug-box" style="border-left-color:var(--pink)"><b>Special avg:</b> ${rates.special}% (${sp?.name||'-'})</div>
       <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>Rare avg:</b> ${rates.rare}% · Normal: ${rates.normal}%</div>
-      <div class="debug-box" style="border-left-color:var(--blue)"><b>ราคารวมทั้งตู้:</b> ${cfg.cabinetType==='heart_step' ? `${cfg.costMap.reduce((a,b)=>a+b,0)} 💜` : `${cfg.costMap.reduce((a,b)=>a+b,0)} ตั๋ว (${cfg.costMap.reduce((a,b)=>a+b,0) * cfg.heartMultiplier} 💜)`}</div>
+      <div class="debug-box" style="border-left-color:var(--blue)"><b>${t('debugTotalCost')}:</b> ${cfg.cabinetType==='heart_step' ? `${cfg.costMap.reduce((a,b)=>a+b,0)} 💜` : `${cfg.costMap.reduce((a,b)=>a+b,0)} tickets (${cfg.costMap.reduce((a,b)=>a+b,0) * cfg.heartMultiplier} 💜)`}</div>
     `;
   }
   document.getElementById('debug-grid').innerHTML = html;
@@ -259,13 +261,13 @@ function renderDebug(cfg, st) {
 
 function renderHistory(st) {
   const s = document.querySelector('.history-bar summary');
-  if (s) s.textContent = `📜 ประวัติการสุ่มตู้นี้ (${st.history.length})`;
+  if (s) s.textContent = `${t('historyTitle')} (${st.history.length})`;
   document.getElementById('hist-row').innerHTML = st.history.slice().reverse().map(h => {
     const pc = h.isSpecial?'special':h.isRare?'rare':h.isRebate?'rebate':'normal';
     const pl = h.isSpecial?'SPECIAL':h.isRare?'RARE':h.isRebate?'REBATE':'NORMAL';
     const nm = h.dup ? `<span style="color:var(--orange)">${h.name} ♻️</span>` : h.name;
     const tag = h.isPity   ? `<span style="color:var(--blue-dk);font-size:.7rem;font-weight:700">Pity ✓</span>` :
-                h.isRebate ? `<span style="color:var(--green-dk);font-size:.72rem;font-weight:700">+${h.tickets} ตั๋ว</span>` : '';
+                h.isRebate ? `<span style="color:var(--green-dk);font-size:.72rem;font-weight:700">+${h.tickets} tickets</span>` : '';
     return `<div class="hist-item"><span><span class="hist-pill ${pc}">${pl}</span>${nm}</span>${tag}</div>`;
   }).join('');
 }
@@ -285,7 +287,7 @@ function clearStage() {
 
 function doPull(n) {
   const cfg = GACHA_DATABASE[activeId], st = getState();
-  if (st.gotAll) { showToast('ตู้นี้เคลียร์ครบแล้ว! กรุณารีเซ็ตก่อน 🏆'); return; }
+  if (st.gotAll) { showToast(t('toastCleared')); return; }
   document.getElementById('btn1').disabled = document.getElementById('btn10').disabled = true;
 
   const results = []; let hasLucky = false;
@@ -298,8 +300,8 @@ function doPull(n) {
       if (res.isRare || res.isSpecial) hasLucky = true;
       const rb = checkRebate(st);
       if (rb) {
-        st.history.push({ name:`ครบ ${rb.target} ครั้ง — รีเบทตั๋วฟรี`, isRebate:true, tickets:rb.tickets });
-        showToast(`🎁 รีเบท! ได้ตั๋วฟรี +${rb.tickets} ใบ (ประหยัด ${rb.heartsSaved} 💜)`);
+        st.history.push({ name: t('rebateLabel', rb.target, rb.tickets), isRebate:true, tickets:rb.tickets });
+        showToast(t('toastRebate', rb.tickets, rb.heartsSaved));
       }
     }
   } else {
@@ -308,7 +310,7 @@ function doPull(n) {
     const res = doSingleRoll(cfg, st);
     if (res.swept?.length) {
       results.push(res); res.swept.forEach(s => results.push(s));
-      st.history.push({ name:`${res.name} + กวาดอีก ${res.swept.length} ชิ้น`, isSpecial:true });
+      st.history.push({ name:`${res.name} + swept ${res.swept.length} items`, isSpecial:true });
       hasLucky = true;
     } else {
       results.push(res); st.history.push(res);
@@ -331,7 +333,7 @@ function doPull(n) {
     const isRainbow = r.isSpecial || r.tag === '🌈';
     const badge    = r.isPity ? 'Pity ✓' : r.isSpecial ? '✨ JACKPOT' : r.isRare ? '★ Rare' : 'Normal';
     const imgPath  = getItemImgPath(r.name);
-    const dupHtml  = r.dup ? `<div class="dup-badge">♻️ ซ้ำ</div>` : '';
+    const dupHtml  = r.dup ? `<div class="dup-badge">♻️ Dup</div>` : '';
     grid.insertAdjacentHTML('beforeend', `
       <div class="gacha-card-holder ${isRainbow ? 'is-rainbow' : ''}" style="animation-delay:${i*.08}s">
         <div class="item-card ${cls}">
@@ -374,16 +376,18 @@ function openCompare() {
 }
 
 function resetPool() {
-  if (!confirm('รีเซ็ตสถานะตู้ย่อยนี้ใช่ไหม?')) return;
+  if (!confirm(t('confirmReset'))) return;
   delete globalState[activeId]; saveGlobalState(globalState); clearStage(); updateUI();
 }
 function resetAllState() {
-  if (!confirm('🚨 ล้างข้อมูลทุกตู้ทั้งหมด ยืนยัน?')) return;
+  if (!confirm(t('confirmResetAll'))) return;
   globalState = {}; saveGlobalState(globalState); clearStage(); updateUI();
 }
 
 renderSubBtns();
 updateUI();
+applyI18n();
+renderLangSwitcher('lang-switcher');
 
 // pre-warm rate cache ของตู้แรกที่โหลด
 (function() {
