@@ -236,10 +236,10 @@ function renderDebug(cfg, st) {
   let html;
   if (cfg.cabinetType === 'big') {
     html = `
-      <div class="debug-box"><b>Engine:</b> Pity Pool · ${cfg.name}</div>
-      <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>Rare Rate:</b> ${(cfg.rareRate*100).toFixed(1)}% (${cfg.items.rare.length} items)</div>
-      <div class="debug-box" style="border-left-color:var(--blue)"><b>Common Rate:</b> ${((1-cfg.rareRate)*100).toFixed(1)}% (${cfg.items.common.length} items)</div>
-      <div class="debug-box" style="border-left-color:var(--pink)"><b>Guarantee:</b> ${t('debugGuarantee', cfg.guarantee1, cfg.guarantee2)}</div>
+      <div class="debug-box"><b>${t('debugEngine')}:</b> Pity Pool · ${cfg.name}</div>
+      <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>${t('debugRareRate')}:</b> ${(cfg.rareRate*100).toFixed(1)}% (${cfg.items.rare.length} items)</div>
+      <div class="debug-box" style="border-left-color:var(--blue)"><b>${t('debugCommonRate')}:</b> ${((1-cfg.rareRate)*100).toFixed(1)}% (${cfg.items.common.length} items)</div>
+      <div class="debug-box" style="border-left-color:var(--pink)"><b>${t('debugGuaranteeLabel')}:</b> ${t('debugGuarantee', cfg.guarantee1, cfg.guarantee2)}</div>
     `;
   } else {
     const total = cfg.items.length, left = st.remainingIdx ? st.remainingIdx.length : total;
@@ -249,10 +249,10 @@ function renderDebug(cfg, st) {
     const rates = calcAvgRates(activeId, cfg);
 
     html = `
-      <div class="debug-box"><b>Engine:</b> Weight Step · ${cfg.name}</div>
+      <div class="debug-box"><b>${t('debugEngine')}:</b> Weight Step · ${cfg.name}</div>
       <div class="debug-box" style="border-left-color:var(--teal)"><b>${t('debugItemsLeft')}:</b> ${left} / ${total}</div>
-      <div class="debug-box" style="border-left-color:var(--pink)"><b>Special avg:</b> ${rates.special}% (${sp?.name||'-'})</div>
-      <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>Rare avg:</b> ${rates.rare}% · Normal: ${rates.normal}%</div>
+      <div class="debug-box" style="border-left-color:var(--pink)"><b>${t('debugSpecialAvg')}:</b> ${rates.special}% (${sp?.name||'-'})</div>
+      <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>${t('debugRareAvg')}:</b> ${rates.rare}% · ${t('debugNormalAvg')}: ${rates.normal}%</div>
       <div class="debug-box" style="border-left-color:var(--blue)"><b>${t('debugTotalCost')}:</b> ${cfg.cabinetType==='heart_step' ? `${cfg.costMap.reduce((a,b)=>a+b,0)} 💜` : `${cfg.costMap.reduce((a,b)=>a+b,0)} tickets (${cfg.costMap.reduce((a,b)=>a+b,0) * cfg.heartMultiplier} 💜)`}</div>
     `;
   }
