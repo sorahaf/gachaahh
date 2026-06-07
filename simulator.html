@@ -329,13 +329,16 @@ function doPull(n) {
 
   const visible = results.filter(r => !r.isRebate);
   visible.forEach((r, i) => {
-    const cls      = r.isSpecial ? 'special' : r.isRare ? 'rare' : '';
+    const cls       = r.isSpecial ? 'special' : r.isRare ? 'rare' : '';
     const isRainbow = r.isSpecial || r.tag === '🌈';
-    const badge    = r.isPity ? 'Pity ✓' : r.isSpecial ? '✨ JACKPOT' : r.isRare ? '★ Rare' : 'Normal';
-    const imgPath  = getItemImgPath(r.name);
-    const dupHtml  = r.dup ? `<div class="dup-badge">♻️ Dup</div>` : '';
+    const badge     = r.isPity ? 'Pity ✓' : r.isSpecial ? '✨ JACKPOT' : r.isRare ? '★ Rare' : 'Normal';
+    const imgPath   = getItemImgPath(r.name);
+    // dup-badge ซ่อนไว้ก่อน จะค่อย fade in ทีหลัง
+    const dupHtml   = r.dup
+      ? `<div class="dup-badge dup-pending" style="opacity:0;transition:opacity .4s">♻️ Dup</div>`
+      : '';
     grid.insertAdjacentHTML('beforeend', `
-      <div class="gacha-card-holder ${isRainbow ? 'is-rainbow' : ''}" style="animation-delay:${i*.08}s">
+      <div class="gacha-card-holder ${isRainbow ? 'is-rainbow' : ''}" style="animation-delay:${i*.08}s" data-dup="${r.dup ? '1' : '0'}">
         <div class="item-card ${cls}">
           <span class="badge">${badge}</span>
           <div class="item-img-wrap">
@@ -357,6 +360,25 @@ function doPull(n) {
     document.querySelectorAll('.gacha-card-holder').forEach(c => c.classList.add('is-revealed'));
     if (hasLucky) { playSound('rare'); spawnConfetti(); } else playSound('reveal');
     updateUI();
+
+    // หลังเห็นรูป 1.2s → ค่อย reveal dup badge + เปลี่ยนรูปเป็น 🎫
+    setTimeout(() => {
+      document.querySelectorAll('.gacha-card-holder[data-dup="1"]').forEach(holder => {
+        const badge = holder.querySelector('.dup-pending');
+        if (badge) badge.style.opacity = '1';
+
+        const imgWrap = holder.querySelector('.item-img-wrap');
+        if (imgWrap) {
+          imgWrap.style.transition = 'opacity .35s';
+          imgWrap.style.opacity = '0';
+          setTimeout(() => {
+            imgWrap.innerHTML = `<div class="item-img-fallback" style="display:flex;font-size:2rem">🎫</div>`;
+            imgWrap.style.opacity = '1';
+          }, 350);
+        }
+      });
+    }, 1200);
+
     // แสดง stats modal หลังล้างตู้
     if (_justCleared) {
       setTimeout(() => showStatsModal(GACHA_DATABASE[activeId], getState().pulls), 900);
@@ -387,22 +409,4 @@ function resetAllState() {
 renderSubBtns();
 updateUI();
 applyI18n();
-renderLangSwitcher('lang-switcher');
-
-// pre-warm rate cache ของตู้แรกที่โหลด
-(function() {
-  const cfg = GACHA_DATABASE[activeId];
-  if (cfg.cabinetType !== 'big') setTimeout(() => { calcAvgRates(activeId, cfg); updateUI(); }, 100);
-})();
-</script>
-
-<footer style="position:relative;z-index:1;text-align:center;padding:1.5rem 1rem 2rem;margin-top:2rem;border-top:1px solid #e0e7ff;">
-  <p style="font-size:.7rem;color:#94a3b8;line-height:1.7;max-width:580px;margin:0 auto;">
-    🎮 <strong style="color:#6b7db3">Fan-made Heartopia Gacha Simulator</strong><br>
-    This website is not affiliated with, endorsed by, or sponsored by the official Heartopia team or XD Games.<br>
-    All game assets, images, trademarks, and copyrights belong to their respective owners.<br>
-    Created for entertainment purposes only and not for profit.
-  </p>
-</footer>
-</body>
-</html>
+renderLangSwitc
