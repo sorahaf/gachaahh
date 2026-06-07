@@ -253,7 +253,7 @@ function buildCompareHTML(cfg, sysData, userData, nPeople) {
         display:flex;align-items:flex-start;justify-content:space-between;gap:1rem">
         <div>
           <div style="font-size:.68rem;font-weight:800;color:#94a3b8;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px">
-            เปรียบเทียบการกระจาย
+            ${t('compareTitle')}
           </div>
           <div style="font-size:1rem;font-weight:800;color:#1e2d5a;line-height:1.3">
             ${cfg.name}
@@ -272,14 +272,14 @@ function buildCompareHTML(cfg, sysData, userData, nPeople) {
       <div style="padding:.8rem 1.4rem .2rem;display:flex;gap:1.2rem;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;color:#4f8ef7">
           <span style="display:inline-block;width:14px;height:10px;background:#4f8ef7;border-radius:2px;opacity:.8"></span>
-          ระบบ (${SIM_ROUNDS.toLocaleString()} รอบ)
+          ${t('compareSysLabel', SIM_ROUNDS)}
         </div>
         <div style="display:flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;color:#f472b6">
           <span style="display:inline-block;width:14px;height:10px;background:#f472b6;border-radius:2px;opacity:.85"></span>
-          จำลองคน (${nPeople.toLocaleString()} คน)
+          ${t('compareUserLabel', nPeople)}
         </div>
         <div style="font-size:.68rem;color:#94a3b8;font-weight:600;margin-left:auto;align-self:center">
-          แกน Y = สัดส่วน (%)
+          ${t('compareAxisY')}
         </div>
       </div>
 
@@ -293,7 +293,7 @@ function buildCompareHTML(cfg, sysData, userData, nPeople) {
       <!-- Stat comparison table -->
       <div style="padding:.2rem 1.4rem .8rem">
         <div style="font-size:.65rem;font-weight:800;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.5rem">
-          สถิติเปรียบเทียบ
+          ${t('compareStatsTitle')}
         </div>
         <div style="
           display:grid;grid-template-columns:auto 1fr 1fr 1fr;
@@ -302,14 +302,14 @@ function buildCompareHTML(cfg, sysData, userData, nPeople) {
         ">
           <!-- header row -->
           <div style="background:#f1f5f9;padding:.35rem .5rem;font-size:.65rem;font-weight:800;color:#94a3b8"></div>
-          <div style="background:#eff5ff;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#4f8ef7;text-align:center">ระบบ</div>
-          <div style="background:#fce7f3;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#f472b6;text-align:center">คนจริง</div>
-          <div style="background:#f8faff;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#94a3b8;text-align:center">ต่าง</div>
+          <div style="background:#eff5ff;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#4f8ef7;text-align:center">${t('compareSys')}</div>
+          <div style="background:#fce7f3;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#f472b6;text-align:center">${t('compareUser')}</div>
+          <div style="background:#f8faff;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#94a3b8;text-align:center">${t('compareDiff')}</div>
           ${statRow('Mean', sysStats.mean, usrStats.mean)}
           ${statRow('Median', sysStats.median, usrStats.median)}
           ${statRow('SD', sysStats.sd, usrStats.sd)}
-          ${statRow('P10 (โชคดี)', sysStats.p10, usrStats.p10)}
-          ${statRow('P90 (โชคร้าย)', sysStats.p90, usrStats.p90)}
+          ${statRow(t('compareP10'), sysStats.p10, usrStats.p10)}
+          ${statRow(t('compareP90'), sysStats.p90, usrStats.p90)}
           ${statRow('Min', sysStats.min, usrStats.min)}
           ${statRow('Max', sysStats.max, usrStats.max)}
         </div>
@@ -317,11 +317,11 @@ function buildCompareHTML(cfg, sysData, userData, nPeople) {
 
       <!-- Re-simulate with different N -->
       <div style="padding:.2rem 1.4rem 1.2rem;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
-        <span style="font-size:.75rem;font-weight:700;color:#64748b">จำลองใหม่:</span>
+        <span style="font-size:.75rem;font-weight:700;color:#64748b">${t('compareResim')}</span>
         <input type="number" id="compare-n-input" value="${nPeople}" min="10" max="${COMPARE_MAX_PEOPLE}"
           style="width:80px;padding:5px 8px;border-radius:10px;border:1.5px solid #dde6ff;
           font-size:.85rem;font-family:'Noto Sans Thai',sans-serif;color:#1e2d5a">
-        <span style="font-size:.68rem;color:#94a3b8">max ${COMPARE_MAX_PEOPLE.toLocaleString()}</span>
+        <span style="font-size:.68rem;color:#94a3b8">${t('compareMax', COMPARE_MAX_PEOPLE)}</span>
         <button onclick="rerunCompare()" style="
           padding:.45rem 1rem;background:linear-gradient(120deg,#4f8ef7,#a78bfa);
           border:none;border-radius:var(--r-pill,999px);color:#fff;
@@ -329,13 +329,13 @@ function buildCompareHTML(cfg, sysData, userData, nPeople) {
           cursor:pointer;box-shadow:0 3px 10px rgba(79,142,247,.25);
           transition:transform .12s"
           onmouseover="this.style.transform='translateY(-1px)'"
-          onmouseout="this.style.transform=''">▶ รัน</button>
+          onmouseout="this.style.transform=''">${t('btnRun')}</button>
         <button onclick="closeCompareModal()" style="
           margin-left:auto;padding:.45rem 1.1rem;
           background:linear-gradient(120deg,#4f8ef7,#f472b6);
           border:none;border-radius:var(--r-pill,999px);color:#fff;
           font-weight:800;font-size:.8rem;font-family:'Noto Sans Thai',sans-serif;
-          cursor:pointer;box-shadow:0 3px 10px rgba(79,142,247,.2)">ปิด</button>
+          cursor:pointer;box-shadow:0 3px 10px rgba(79,142,247,.2)">${t('btnClose')}</button>
       </div>
     </div>
   </div>`;
