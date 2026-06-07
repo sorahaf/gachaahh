@@ -29,7 +29,7 @@ function calcAvgRates(cfgId, cfg) {
       }));
       const totalW = pool.reduce((s, p) => s + p.weight, 0);
       let rng = Math.random() * totalW, acc = 0, chosen = pool[pool.length - 1];
-      for (const p of pool) { acc += p.weight; if (rng <= acc) { chosen = p; break; } }
+      for (const p of pool) { acc += p.weight; if (rng < acc) { chosen = p; break; } }
 
       pulls++;
       totalPulls++;
@@ -110,7 +110,7 @@ function simOnceStep(cfg) {
     }));
     const totalW = pool.reduce((s, p) => s + p.weight, 0);
     let rng = Math.random() * totalW, acc = 0, chosen = pool[pool.length - 1];
-    for (const p of pool) { acc += p.weight; if (rng <= acc) { chosen = p; break; } }
+    for (const p of pool) { acc += p.weight; if (rng < acc) { chosen = p; break; } }
     pulls++;
     if (cfg.items[chosen.origIdx].isSpecial) { remaining = []; }
     else { remaining = remaining.filter(i => i !== chosen.origIdx); }
@@ -226,8 +226,8 @@ function statRow(label, sysVal, usrVal, highlight) {
 // Build Modal HTML
 // ══════════════════════════════════════════
 function buildCompareHTML(cfg, sysData, userData, nPeople) {
-  const sysStats = calcStats([...sysData]);
-  const usrStats = calcStats([...userData]);
+  const sysStats = calcStats(sysData);   // ไม่ spread — ไม่มี actual ก็ rank = 0
+  const usrStats = calcStats(userData);  // ไม่ spread
   const bins     = buildCompareBins(sysData, userData);
   const chart    = buildCompareChart(bins, sysData.length, userData.length);
 
@@ -305,13 +305,13 @@ function buildCompareHTML(cfg, sysData, userData, nPeople) {
           <div style="background:#eff5ff;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#4f8ef7;text-align:center">${t('compareSys')}</div>
           <div style="background:#fce7f3;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#f472b6;text-align:center">${t('compareUser')}</div>
           <div style="background:#f8faff;padding:.35rem 0;font-size:.65rem;font-weight:800;color:#94a3b8;text-align:center">${t('compareDiff')}</div>
-          ${statRow('Mean', sysStats.mean, usrStats.mean)}
-          ${statRow('Median', sysStats.median, usrStats.median)}
-          ${statRow('SD', sysStats.sd, usrStats.sd)}
-          ${statRow(t('compareP10'), sysStats.p10, usrStats.p10)}
-          ${statRow(t('compareP90'), sysStats.p90, usrStats.p90)}
-          ${statRow('Min', sysStats.min, usrStats.min)}
-          ${statRow('Max', sysStats.max, usrStats.max)}
+          ${statRow(t('compareRowMean'),   sysStats.mean,   usrStats.mean)}
+          ${statRow(t('compareRowMedian'), sysStats.median, usrStats.median)}
+          ${statRow(t('compareRowSD'),     sysStats.sd,     usrStats.sd)}
+          ${statRow(t('compareP10'),  sysStats.p10, usrStats.p10)}
+          ${statRow(t('compareP90'),  sysStats.p90, usrStats.p90)}
+          ${statRow(t('compareRowMin'),    sysStats.min,    usrStats.min)}
+          ${statRow(t('compareRowMax'),    sysStats.max,    usrStats.max)}
         </div>
       </div>
 
