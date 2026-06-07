@@ -195,7 +195,7 @@ function updateUI() {
   if (cfg.cabinetType === 'big') {
     btn10.style.display = '';
     document.getElementById('cost10').textContent =
-      `${cfg.costPerPull*10} tickets (${cfg.costPerPull*10*cfg.heartMultiplier} 💜)`;
+      `${cfg.costPerPull*10} ${t('unitTicket')} (${cfg.costPerPull*10*cfg.heartMultiplier} 💜)`;
     btn10.disabled = isDone;
   } else { btn10.style.display = 'none'; }
 
@@ -253,7 +253,7 @@ function renderDebug(cfg, st) {
       <div class="debug-box" style="border-left-color:var(--teal)"><b>${t('debugItemsLeft')}:</b> ${left} / ${total}</div>
       <div class="debug-box" style="border-left-color:var(--pink)"><b>${t('debugSpecialAvg')}:</b> ${rates.special}% (${sp?.name||'-'})</div>
       <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>${t('debugRareAvg')}:</b> ${rates.rare}% · ${t('debugNormalAvg')}: ${rates.normal}%</div>
-      <div class="debug-box" style="border-left-color:var(--blue)"><b>${t('debugTotalCost')}:</b> ${cfg.cabinetType==='heart_step' ? `${cfg.costMap.reduce((a,b)=>a+b,0)} 💜` : `${cfg.costMap.reduce((a,b)=>a+b,0)} tickets (${cfg.costMap.reduce((a,b)=>a+b,0) * cfg.heartMultiplier} 💜)`}</div>
+      <div class="debug-box" style="border-left-color:var(--blue)"><b>${t('debugTotalCost')}:</b> ${cfg.cabinetType==='heart_step' ? `${cfg.costMap.reduce((a,b)=>a+b,0)} 💜` : `${cfg.costMap.reduce((a,b)=>a+b,0)} ${t('unitTicket')} (${cfg.costMap.reduce((a,b)=>a+b,0) * cfg.heartMultiplier} 💜)`}</div>
     `;
   }
   document.getElementById('debug-grid').innerHTML = html;
@@ -267,7 +267,7 @@ function renderHistory(st) {
     const pl = h.isSpecial?'SPECIAL':h.isRare?'RARE':h.isRebate?'REBATE':'NORMAL';
     const nm = h.dup ? `<span style="color:var(--orange)">${h.name} ♻️</span>` : h.name;
     const tag = h.isPity   ? `<span style="color:var(--blue-dk);font-size:.7rem;font-weight:700">Pity ✓</span>` :
-                h.isRebate ? `<span style="color:var(--green-dk);font-size:.72rem;font-weight:700">+${h.tickets} tickets</span>` : '';
+                h.isRebate ? `<span style="color:var(--green-dk);font-size:.72rem;font-weight:700">+${h.tickets} ${t('unitTicket')}</span>` : '';
     return `<div class="hist-item"><span><span class="hist-pill ${pc}">${pl}</span>${nm}</span>${tag}</div>`;
   }).join('');
 }
@@ -329,16 +329,13 @@ function doPull(n) {
 
   const visible = results.filter(r => !r.isRebate);
   visible.forEach((r, i) => {
-    const cls       = r.isSpecial ? 'special' : r.isRare ? 'rare' : '';
+    const cls      = r.isSpecial ? 'special' : r.isRare ? 'rare' : '';
     const isRainbow = r.isSpecial || r.tag === '🌈';
-    const badge     = r.isPity ? 'Pity ✓' : r.isSpecial ? '✨ JACKPOT' : r.isRare ? '★ Rare' : 'Normal';
-    const imgPath   = getItemImgPath(r.name);
-    // dup-badge ซ่อนไว้ก่อน จะค่อย fade in ทีหลัง
-    const dupHtml   = r.dup
-      ? `<div class="dup-badge dup-pending" style="opacity:0;transition:opacity .4s">♻️ Dup</div>`
-      : '';
+    const badge    = r.isPity ? 'Pity ✓' : r.isSpecial ? '✨ JACKPOT' : r.isRare ? '★ Rare' : 'Normal';
+    const imgPath  = getItemImgPath(r.name);
+    const dupHtml  = r.dup ? `<div class="dup-badge">♻️ Dup</div>` : '';
     grid.insertAdjacentHTML('beforeend', `
-      <div class="gacha-card-holder ${isRainbow ? 'is-rainbow' : ''}" style="animation-delay:${i*.08}s" data-dup="${r.dup ? '1' : '0'}">
+      <div class="gacha-card-holder ${isRainbow ? 'is-rainbow' : ''}" style="animation-delay:${i*.08}s">
         <div class="item-card ${cls}">
           <span class="badge">${badge}</span>
           <div class="item-img-wrap">
@@ -360,27 +357,6 @@ function doPull(n) {
     document.querySelectorAll('.gacha-card-holder').forEach(c => c.classList.add('is-revealed'));
     if (hasLucky) { playSound('rare'); spawnConfetti(); } else playSound('reveal');
     updateUI();
-
-    // หลังเห็นรูป 1.2s → ค่อย reveal dup badge + เปลี่ยนรูปเป็น 🎫
-    setTimeout(() => {
-      document.querySelectorAll('.gacha-card-holder[data-dup="1"]').forEach(holder => {
-        // fade in dup-badge
-        const badge = holder.querySelector('.dup-pending');
-        if (badge) badge.style.opacity = '1';
-
-        // เปลี่ยน img-wrap เป็น 🎫 แบบ fade
-        const imgWrap = holder.querySelector('.item-img-wrap');
-        if (imgWrap) {
-          imgWrap.style.transition = 'opacity .35s';
-          imgWrap.style.opacity = '0';
-          setTimeout(() => {
-            imgWrap.innerHTML = `<div class="item-img-fallback" style="display:flex;font-size:2rem">🎫</div>`;
-            imgWrap.style.opacity = '1';
-          }, 350);
-        }
-      });
-    }, 1200);
-
     // แสดง stats modal หลังล้างตู้
     if (_justCleared) {
       setTimeout(() => showStatsModal(GACHA_DATABASE[activeId], getState().pulls), 900);
