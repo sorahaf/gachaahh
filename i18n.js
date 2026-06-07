@@ -90,6 +90,7 @@ const LANGS = {
     debugSpecialAvg:     'Special avg',
     debugRareAvg:        'Rare avg',
     debugNormalAvg:      'Normal avg',
+    unitTicket:          'ตั๋ว',
 
     // compare stat row labels
     compareRowMean:   'Mean',
@@ -201,8 +202,7 @@ const LANGS = {
     debugSpecialAvg:     'Special avg',
     debugRareAvg:        'Rare avg',
     debugNormalAvg:      'Normal avg',
-
-    // compare stat row labels
+    unitTicket:          'tickets',
     compareRowMean:   'Mean',
     compareRowMedian: 'Median',
     compareRowSD:     'SD',
