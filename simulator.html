@@ -251,7 +251,7 @@ function renderDebug(cfg, st) {
       <div class="debug-box" style="border-left-color:var(--teal)"><b>ไอเทมคงเหลือ:</b> ${left} / ${total}</div>
       <div class="debug-box" style="border-left-color:var(--pink)"><b>Special avg:</b> ${rates.special}% (${sp?.name||'-'})</div>
       <div class="debug-box" style="border-left-color:var(--yellow-dk)"><b>Rare avg:</b> ${rates.rare}% · Normal: ${rates.normal}%</div>
-      <div class="debug-box" style="border-left-color:var(--blue)"><b>ราคา Max:</b> ${cfg.costMap[cfg.costMap.length-1]} ${cfg.cabinetType==='heart_step'?'💜':'ตั๋ว'}/ครั้ง</div>
+      <div class="debug-box" style="border-left-color:var(--blue)"><b>ราคารวมทั้งตู้:</b> ${cfg.cabinetType==='heart_step' ? `${cfg.costMap.reduce((a,b)=>a+b,0)} 💜` : `${cfg.costMap.reduce((a,b)=>a+b,0)} ตั๋ว (${cfg.costMap.reduce((a,b)=>a+b,0) * cfg.heartMultiplier} 💜)`}</div>
     `;
   }
   document.getElementById('debug-grid').innerHTML = html;
