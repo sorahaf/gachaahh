@@ -153,7 +153,7 @@ function rollStepPool(cfg, st) {
   let rng = Math.random() * totalW, acc = 0, chosen = pool[pool.length - 1];
   for (const p of pool) {
     acc += p.weight;
-    if (rng <= acc) { chosen = p; break; }
+    if (rng < acc) { chosen = p; break; }
   }
 
   const rolled = chosen.item;
