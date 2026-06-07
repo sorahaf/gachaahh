@@ -253,12 +253,15 @@ body {
    Info Bar
    ══════════════════════════════════════ */
 .info-bar {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: .5rem;
   margin-bottom: .9rem;
 }
 .info-chip {
+  flex: 1 1 100px;
+  min-width: 90px;
+  max-width: 160px;
   background: var(--surface);
   border: 1.5px solid var(--border);
   border-radius: var(--r-lg);
@@ -278,7 +281,8 @@ body {
 .info-chip.thb .v    { color: var(--pink); }
 .info-chip.hearts .v { color: var(--blue); }
 .info-chip.cleared {
-  grid-column: 1/-1;
+  flex: 1 1 100%;
+  max-width: 100%;
   background: linear-gradient(120deg, #ecfdf5, #f0fdf4);
   border-color: #6ee7b7;
 }
