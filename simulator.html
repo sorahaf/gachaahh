@@ -381,7 +381,8 @@ function doPull(n) {
 
     // แสดง stats modal หลังล้างตู้
     if (_justCleared) {
-      setTimeout(() => showStatsModal(GACHA_DATABASE[activeId], getState().pulls), 900);
+      const _st = getState();
+      setTimeout(() => showStatsModal(GACHA_DATABASE[activeId], _st.pulls, _st.totalHeartsUsed), 900);
     }
     document.getElementById('btn1').disabled = document.getElementById('btn10').disabled = false;
   }, visible.length * 80 + 260);
