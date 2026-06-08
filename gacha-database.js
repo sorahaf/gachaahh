@@ -555,7 +555,7 @@ const THEME_META = {
     bannerUrl:  "images/Golden%20Mirage.jpg",
     bgUrl:      "",
     startDate:  "2026-05-30",
-    endDate:    "2026-07-04"
+    endDate:    "2026-07-24"
   },
   "🎪 Lustrous Parade": {
     bannerUrl:  "images/Lustrous%20Parade.jpg",
