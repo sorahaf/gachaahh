@@ -316,7 +316,7 @@ function buildChart(bins, stats, actualPulls, zone) {
 // ══════════════════════════════════════════
 // Modal HTML Builder
 // ══════════════════════════════════════════
-function buildModalHTML(cfg, actualPulls, stats, bins) {
+function buildModalHTML(cfg, actualPulls, stats, bins, actualHeartsUsed) {
   const isStepBox = cfg.cabinetType !== 'big';
 
   // ── banner URL จาก THEME_META ──
@@ -325,8 +325,16 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
   // ── cost helper ──
   function costLabel(pulls) {
     if (cfg.cabinetType === 'big') {
-      const hearts = pulls * cfg.costPerPull * cfg.heartMultiplier;
-      return `~${hearts.toLocaleString()} 💜 (฿${calculateTHBCost(hearts).toLocaleString()})`;
+      const gross = pulls * cfg.costPerPull * cfg.heartMultiplier;
+      const net   = (actualHeartsUsed != null) ? actualHeartsUsed : gross;
+      const rebated = gross - net;
+      // แสดง 2 บรรทัด: ก่อนหักรีเบท / หลังหักรีเบท
+      const lineGross = `<span style="color:#94a3b8;text-decoration:line-through;font-size:.8em">${gross.toLocaleString()} 💜 (฿${calculateTHBCost(gross).toLocaleString()})</span>`;
+      const lineNet   = `<span>${net.toLocaleString()} 💜 (฿${calculateTHBCost(net).toLocaleString()})</span>`;
+      const lineRebate = rebated > 0
+        ? `<span style="font-size:.72rem;color:#34d399;font-weight:700">🎁 ${t('statRebateSaved')} ${rebated.toLocaleString()} 💜</span>`
+        : '';
+      return [lineGross, lineNet, lineRebate].filter(Boolean).join('<br>');
     }
     // step pool: sum costMap จนถึง pull นั้น (cap ที่ length)
     const capped = Math.min(pulls, cfg.costMap.length);
@@ -483,7 +491,7 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
             grid-column:1/-1;
           ">
             <div style="font-size:.62rem;font-weight:700;color:#6b7db3">${t('statRowCost')}</div>
-            <div style="font-size:.88rem;font-weight:800;color:#1e2d5a;font-family:'Sora',monospace">${costLabel(actualPulls)}</div>
+            <div style="font-size:.88rem;font-weight:800;color:#1e2d5a;font-family:'Sora',monospace;line-height:1.6">${costLabel(actualPulls)}</div>
           </div>
         </div>
       </div>
@@ -547,15 +555,15 @@ function buildModalHTML(cfg, actualPulls, stats, bins) {
 
 let _shareData = null;
 
-function showStatsModal(cfg, actualPulls) {
+function showStatsModal(cfg, actualPulls, actualHeartsUsed) {
   const rawData = runSimulation(cfg);
   const stats = calcStats(rawData, actualPulls);  // ส่ง actual ตรงๆ
   const bins  = buildBins(stats.sorted);
-  _shareData = { cfg, actualPulls, stats };
+  _shareData = { cfg, actualPulls, actualHeartsUsed, stats };
 
   const wrapper = document.createElement('div');
   wrapper.id = 'stats-modal-root';
-  wrapper.innerHTML = buildModalHTML(cfg, actualPulls, stats, bins);
+  wrapper.innerHTML = buildModalHTML(cfg, actualPulls, stats, bins, actualHeartsUsed);
   document.body.appendChild(wrapper);
 }
 
