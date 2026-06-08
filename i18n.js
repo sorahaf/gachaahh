@@ -70,6 +70,7 @@ const LANGS = {
     statRowP10:       'โชคดีสุด (P10)',
     statRowP90:       'โชคร้ายสุด (P90)',
     statRowCost:      'ต้นทุนของคุณรอบนี้',
+    statRebateSaved:  'ประหยัดจากรีเบท',
     statValPulls:     (n) => `${n} ครั้ง`,
     btnSaveCard:      '⬇️ บันทึกรูปสรุป',
     btnClose:         'ปิด',
@@ -182,6 +183,7 @@ const LANGS = {
     statRowP10:       'Luckiest (P10)',
     statRowP90:       'Unluckiest (P90)',
     statRowCost:      'Your Cost This Run',
+    statRebateSaved:  'Saved from Rebate',
     statValPulls:     (n) => `${n} pulls`,
     btnSaveCard:      '⬇️ Save Summary Card',
     btnClose:         'Close',
@@ -285,7 +287,7 @@ function switchLang(lang) {
   if (typeof _shareData !== 'undefined' && _shareData &&
       document.getElementById('stats-modal-root')) {
     closeStatsModal();
-    showStatsModal(_shareData.cfg, _shareData.actualPulls);
+    showStatsModal(_shareData.cfg, _shareData.actualPulls, _shareData.actualHeartsUsed);
   }
   // re-render compare modal ถ้าเปิดอยู่
   if (typeof _compareCfg !== 'undefined' && _compareCfg &&
