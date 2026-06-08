@@ -1,6 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Noto+Sans+Thai:wght@400;500;700;800&family=Sora:wght@700;800;900&display=swap');
 
 /* ══════════════════════════════════════
+   Scrollbar — น่ารัก ฟ้า-ชมพู
+   ══════════════════════════════════════ */
+::-webkit-scrollbar              { width: 8px; height: 8px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        {
+  background: linear-gradient(180deg, #93C5FD 0%, #F9A8D4 100%);
+  border-radius: 99px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover  {
+  background: linear-gradient(180deg, #60A5FA 0%, #F472B6 100%);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+::-webkit-scrollbar-corner       { background: transparent; }
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: #93C5FD transparent; }
+
+/* ══════════════════════════════════════
    Palette — Blue & Pink
    ══════════════════════════════════════ */
 :root {
@@ -88,26 +108,61 @@ input[type="button"], input[type="submit"] {
     #F0F4FF;
 }
 #bg-layer img.bg-img {
+  --bg-final-opacity: .78;
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: cover;
-  opacity: .12;
-  filter: blur(3px) saturate(1.2) sepia(0.1);
+  opacity: 0;
+  filter: saturate(1.15);
+  animation: bgFadeIn 1.8s cubic-bezier(.4,0,.2,1) forwards;
+}
+@keyframes bgFadeIn {
+  from { opacity: 0; }
+  to   { opacity: var(--bg-final-opacity); }
 }
 
-/* ── floating orbs ── */
-.deco-bubble {
-  position: fixed;
-  border-radius: 50%;
+/* ── BG: fade บน (ชัด) → ล่าง (เฟด) ── */
+#bg-layer::after {
+  content: '';
+  position: absolute; inset: 0; z-index: 2;
+  background: linear-gradient(to bottom, transparent 60%, var(--bg) 100%);
   pointer-events: none;
-  z-index: 0;
-  filter: blur(1.5px);
-  animation: orb linear infinite;
 }
-@keyframes orb {
-  0%   { transform: translateY(0)    scale(1);    opacity: .45; }
-  50%  { transform: translateY(-20px) scale(1.06); opacity: .28; }
-  100% { transform: translateY(0)    scale(1);    opacity: .45; }
+
+/* ── Morning: light reflection spots ── */
+.deco-bokeh {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  /* blur set per-element in JS */
+  animation: bokehFloat ease-in-out infinite;
+}
+@keyframes bokehFloat {
+  0%   { transform: translateY(0)     translateX(0)    scale(1);    opacity: .65; }
+  40%  { transform: translateY(-18px) translateX(8px)  scale(1.08); opacity: .35; }
+  70%  { transform: translateY(-9px)  translateX(-5px) scale(.95);  opacity: .55; }
+  100% { transform: translateY(0)     translateX(0)    scale(1);    opacity: .65; }
+}
+
+/* ── Evening: sun rays ── */
+.deco-ray {
+  position: fixed; top: -8vh; left: 50%;
+  pointer-events: none; z-index: 0;
+  transform-origin: top center;
+  animation: rayPulse ease-in-out infinite alternate;
+}
+@keyframes rayPulse {
+  from { opacity: .10; }
+  to   { opacity: .26; }
+}
+
+/* ── Night: twinkling stars ── */
+.deco-star {
+  position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+  background: #fff;
+  animation: starTwinkle ease-in-out infinite alternate;
+}
+@keyframes starTwinkle {
+  from { opacity: .06; transform: scale(.5); }
+  to   { opacity: 1;   transform: scale(1.3); }
 }
 
 /* ══════════════════════════════════════
@@ -151,17 +206,23 @@ input[type="button"], input[type="submit"] {
    Portal
    ══════════════════════════════════════ */
 .portal-title {
-  font-family: var(--font-head);
-  font-size: 2rem; font-weight: 900;
-  text-align: center;
-  background: linear-gradient(120deg, var(--amber), var(--rose));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   margin-bottom: .3rem;
+  font-size: 0;            /* ซ่อน text เดิม — content เป็น SVG แทน */
+  background: none;
+  text-shadow: none;
+  -webkit-text-fill-color: transparent;
+}
+.portal-divider {
+  width: 260px; height: 3px; margin: .1rem auto 1.2rem;
+  background: linear-gradient(to right, transparent, var(--rose) 30%, var(--amber) 70%, transparent);
+  border-radius: 99px;
+  opacity: .85;
 }
 .portal-sub {
   text-align: center;
-  color: var(--text-muted);
-  font-size: .85rem; font-weight: 700;
+  color: #fff;
+  font-size: .88rem; font-weight: 700;
+  text-shadow: 0 1px 6px rgba(0,0,0,.35);
   margin-bottom: 2rem;
 }
 
@@ -222,6 +283,13 @@ input[type="button"], input[type="submit"] {
   text-shadow: 0 1px 8px rgba(0,0,0,.45);
 }
 .banner-card .banner-meta { font-size: .7rem; color: rgba(255,255,255,.78); margin-top: 1px; font-weight: 700; }
+.banner-card .banner-date { font-size: .65rem; color: rgba(255,255,255,.65); margin-top: 3px; font-weight: 600; }
+
+/* ── ตู้ที่ปิดแล้ว ── */
+.banner-card--expired { cursor: default; filter: grayscale(.7) brightness(.75); opacity: .7; }
+.banner-card--expired:hover { transform: none; box-shadow: 0 4px 18px rgba(0,0,0,.18); }
+.banner-card--expired .banner-date { color: rgba(255,255,255,.8); }
+.group-label--expired { opacity: .65; }
 .banner-card .banner-type-badge {
   position: absolute; top: .5rem; right: .5rem;
   background: rgba(255,255,255,.92);
@@ -431,9 +499,9 @@ input[type="button"], input[type="submit"] {
   to   { opacity: 1; transform: none; }
 }
 
-/* หลังไพ่ — pastel warm */
+/* หลังไพ่ — ตาม theme (default = morning 🍃) */
 .gacha-card-holder::after {
-  content: '🌸';
+  content: '🍃';
   position: absolute; inset: 0;
   background: linear-gradient(150deg, #EEF4FF, #C7DAFF);
   display: flex; align-items: center; justify-content: center;
@@ -767,3 +835,274 @@ input[type="button"], input[type="submit"] {
   .pull-btn     { min-width: 100px; font-size: .88rem; }
   .portal-title { font-size: 1.5rem; }
 }
+
+/* ══════════════════════════════════════
+   Dynamic Time Themes
+   ══════════════════════════════════════ */
+
+/* Morning: BG รูปชัดขึ้น, palette คงเดิม (blue-pink) */
+#bg-layer img.bg-img {
+  opacity: .24;
+  filter: blur(1px) saturate(1.2);
+  transition: opacity 1s ease;
+}
+
+/* ── Evening (12–18) — warm rose / peach ── */
+html.theme-evening {
+  --bg:        #F0DDE8;
+  --surface:   #FFFFFF;
+  --surface2:  #F5E8F0;
+
+  --amber:     #C4708A;
+  --amber-dk:  #A0526C;
+  --amber-lt:  #ECCAD8;
+  --amber-xlt: #F8EEF4;
+
+  --rose:      #E08860;
+  --rose-dk:   #BC6038;
+  --rose-lt:   #F8DECE;
+
+  --text:      #2A1828;
+  --text-soft: #5A3848;
+  --text-muted:#9A7888;
+
+  --border:    #E8C0D0;
+  --shadow:    rgba(196,112,138,.16);
+  --shadow-pk: rgba(224,136,96,.14);
+
+  --blue:      #C4708A; --blue-dk: #A0526C; --blue-lt: #ECCAD8; --blue-xlt: #F8EEF4;
+  --pink:      #E08860; --pink-dk: #BC6038; --pink-lt: #F8DECE;
+}
+html.theme-evening #bg-layer {
+  background:
+    radial-gradient(ellipse 70% 55% at 5%  5%,  #F0C0D0 0%, transparent 55%),
+    radial-gradient(ellipse 55% 45% at 95% 95%, #F8D8B0 0%, transparent 55%),
+    radial-gradient(ellipse 40% 50% at 50% 50%, #F0DCE8 0%, transparent 65%),
+    #F0DDE8;
+}
+html.theme-evening #bg-layer img.bg-img {
+  --bg-final-opacity: .80;
+  filter: saturate(1.3) sepia(0.05);
+}
+html.theme-evening .gacha-card-holder::after { content: '☀️'; }
+}
+html.theme-evening .pull1 {
+  background: linear-gradient(135deg, #E898B8, #C4708A);
+  box-shadow: 0 4px 18px rgba(196,112,138,.45);
+}
+html.theme-evening .pull1:hover { box-shadow: 0 8px 26px rgba(196,112,138,.58); }
+html.theme-evening .pull10 {
+  background: linear-gradient(135deg, #F0B090, #E08860);
+  box-shadow: 0 4px 18px rgba(224,136,96,.45);
+}
+html.theme-evening .pull10:hover { box-shadow: 0 8px 26px rgba(224,136,96,.58); }
+html.theme-evening .compare-btn {
+  background: linear-gradient(135deg, #D4A0C0, #A870A0);
+  box-shadow: 0 4px 18px rgba(168,112,160,.4);
+}
+@keyframes pulseGlowEvening {
+  0%,100% { box-shadow: 0 4px 18px rgba(196,112,138,.45); }
+  50%      { box-shadow: 0 6px 28px rgba(196,112,138,.65), 0 0 0 5px rgba(196,112,138,.1); }
+}
+@keyframes pulseGlowEveningRose {
+  0%,100% { box-shadow: 0 4px 18px rgba(224,136,96,.45); }
+  50%      { box-shadow: 0 6px 28px rgba(224,136,96,.65), 0 0 0 5px rgba(224,136,96,.1); }
+}
+html.theme-evening .pull-btn.pull1:not(:disabled)  { animation: pulseGlowEvening 2.8s ease-in-out infinite; }
+html.theme-evening .pull-btn.pull10:not(:disabled) { animation: pulseGlowEveningRose 2.8s ease-in-out infinite; animation-delay:.7s; }
+
+/* ── Night (19–4) — dark navy panels + moonlight ── */
+html.theme-night {
+  --bg:        #09152E;
+  --surface:   rgba(12, 24, 58, 0.88);
+  --surface2:  rgba(8, 18, 46, 0.92);
+
+  --amber:     #60A5FA;
+  --amber-dk:  #3B82F6;
+  --amber-lt:  rgba(96,165,250,.18);
+  --amber-xlt: rgba(96,165,250,.09);
+
+  --rose:      #A78BFA;
+  --rose-dk:   #7C3AED;
+  --rose-lt:   rgba(167,139,250,.18);
+
+  --purple:    #C4B5FD;
+  --purple-dk: #8B5CF6;
+
+  --text:      #D8E8FF;
+  --text-soft: #A0B8E0;
+  --text-muted:#6888C0;
+
+  --border:    rgba(60,110,200,.28);
+  --shadow:    rgba(96,165,250,.22);
+  --shadow-pk: rgba(167,139,250,.20);
+
+  --green:     #34D399; --green-dk: #10B981;
+  --red:       #F87171;
+
+  --blue:      #60A5FA; --blue-dk: #3B82F6; --blue-lt: rgba(96,165,250,.18); --blue-xlt: rgba(96,165,250,.09);
+  --pink:      #A78BFA; --pink-dk: #7C3AED; --pink-lt: rgba(167,139,250,.18);
+}
+
+html.theme-night #bg-layer {
+  background: #09152E;
+}
+html.theme-night #bg-layer img.bg-img {
+  --bg-final-opacity: .68;
+  filter: brightness(0.88) saturate(1.1);
+}
+html.theme-night .gacha-card-holder::after { content: '🌟'; }
+
+/* Night panels — dark navy glass */
+html.theme-night .selector-block,
+html.theme-night .debug-panel,
+html.theme-night .history-bar {
+  background: rgba(10, 22, 55, 0.82);
+  border-color: rgba(60,110,200,.22);
+}
+html.theme-night .info-chip {
+  background: rgba(10, 22, 55, 0.82);
+  border-color: rgba(60,110,200,.22);
+}
+html.theme-night .info-chip.cleared {
+  background: rgba(10, 40, 28, 0.82);
+  border-color: rgba(52,211,153,.28);
+}
+html.theme-night .stage {
+  background: linear-gradient(140deg, rgba(8,20,55,.75), rgba(16,10,45,.75));
+  border-color: rgba(60,110,200,.18);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,.04), 0 4px 18px rgba(0,0,10,.4);
+}
+html.theme-night .sub-btn {
+  background: rgba(14,28,68,.80);
+  border-color: rgba(60,110,200,.22);
+  color: var(--text-soft);
+}
+html.theme-night .sub-btn:hover { border-color: rgba(96,165,250,.4); color: var(--amber); box-shadow: 0 4px 14px rgba(96,165,250,.18); }
+html.theme-night .sub-btn.active {
+  background: linear-gradient(135deg, #3B82F6, #60A5FA);
+  border-color: transparent; color: #fff;
+  box-shadow: 0 4px 14px rgba(59,130,246,.4);
+}
+html.theme-night .back {
+  background: rgba(14,28,68,.85);
+  border-color: rgba(60,110,200,.25);
+  color: var(--text-soft);
+  box-shadow: none;
+}
+html.theme-night .back:hover { color: var(--amber); box-shadow: none; }
+html.theme-night .hist-item {
+  background: rgba(10,20,52,.78);
+  border-color: rgba(60,110,200,.18);
+}
+html.theme-night .debug-box {
+  background: rgba(10,20,52,.78);
+  border-color: rgba(60,110,200,.18);
+  border-left-color: var(--amber);
+  color: var(--text);
+}
+html.theme-night .reset-pull {
+  background: rgba(14,28,68,.80);
+  border-color: rgba(60,110,200,.22);
+  color: var(--text-muted);
+}
+html.theme-night .reset-pull:hover { color: var(--red); border-color: rgba(248,113,113,.3); }
+html.theme-night .btn-danger {
+  background: rgba(40,10,10,.6);
+  border-color: rgba(248,113,113,.3);
+  box-shadow: 0 3px 0 rgba(248,113,113,.2);
+}
+html.theme-night .group-label {
+  background: rgba(14,28,68,.82);
+  border-color: rgba(60,110,200,.28);
+  color: var(--amber);
+}
+html.theme-night .banner-card { border-color: rgba(60,110,200,.25); }
+
+/* Night: item card หน้า — คงสว่างเพื่อให้อ่านชื่อไอเทมได้ */
+html.theme-night .item-card {
+  background: linear-gradient(160deg, rgba(230,240,255,.97), rgba(215,228,255,.97));
+  border-color: rgba(96,165,250,.3);
+  color: #1E293B;
+}
+html.theme-night .item-card .card-name  { color: #1E293B; }
+html.theme-night .item-card .badge      { background: rgba(96,165,250,.18); color: #2B5FCC; }
+html.theme-night .item-card .debug-chance { color: #6888C0; }
+html.theme-night .item-card.rare {
+  background: linear-gradient(160deg, rgba(238,232,255,.97), rgba(225,218,255,.97));
+  border-color: rgba(167,139,250,.35);
+}
+html.theme-night .item-card.rare .card-name  { color: var(--purple-dk); }
+html.theme-night .item-card.rare .badge      { background: rgba(167,139,250,.2); color: var(--purple-dk); }
+html.theme-night .item-card.special {
+  background: linear-gradient(160deg, rgba(240,230,255,.97), rgba(228,218,255,.97));
+  border-color: rgba(167,139,250,.45);
+}
+
+/* Night card back — dark navy */
+html.theme-night .gacha-card-holder::after {
+  background: linear-gradient(150deg, #1A2E6E, #0F1C4A);
+}
+
+/* Night pull buttons */
+html.theme-night .pull1 {
+  background: linear-gradient(135deg, #60A5FA, #3B82F6);
+  box-shadow: 0 4px 18px rgba(59,130,246,.5);
+  text-shadow: 0 1px 3px rgba(10,30,100,.3);
+}
+html.theme-night .pull1:hover { box-shadow: 0 8px 26px rgba(59,130,246,.65); }
+html.theme-night .pull10 {
+  background: linear-gradient(135deg, #C4B5FD, #A78BFA);
+  box-shadow: 0 4px 18px rgba(167,139,250,.5);
+  text-shadow: 0 1px 3px rgba(60,20,120,.3);
+}
+html.theme-night .pull10:hover { box-shadow: 0 8px 26px rgba(167,139,250,.65); }
+html.theme-night .compare-btn {
+  background: linear-gradient(135deg, #818CF8, #6366F1);
+  box-shadow: 0 4px 18px rgba(99,102,241,.45);
+}
+@keyframes pulseGlowNight {
+  0%,100% { box-shadow: 0 4px 18px rgba(59,130,246,.5); }
+  50%      { box-shadow: 0 6px 28px rgba(59,130,246,.7), 0 0 0 5px rgba(59,130,246,.12); }
+}
+@keyframes pulseGlowNightRose {
+  0%,100% { box-shadow: 0 4px 18px rgba(167,139,250,.5); }
+  50%      { box-shadow: 0 6px 28px rgba(167,139,250,.7), 0 0 0 5px rgba(167,139,250,.12); }
+}
+html.theme-night .pull-btn.pull1:not(:disabled)  { animation: pulseGlowNight 2.8s ease-in-out infinite; }
+html.theme-night .pull-btn.pull10:not(:disabled) { animation: pulseGlowNightRose 2.8s ease-in-out infinite; animation-delay:.7s; }
+
+/* Night title — stroke สีฟ้า (ใช้ผ่าน JS buildArchTitle) */
+
+/* Night toast */
+html.theme-night .toast {
+  box-shadow: 0 5px 0 #2563EB, 0 8px 20px rgba(96,165,250,.3);
+}
+
+/* ── Footer ── */
+footer {
+  position: relative; z-index: 1;
+  text-align: center;
+  padding: 2rem 1rem 2.5rem;
+  margin-top: 2rem;
+  border-top: none;
+  /* เฟดจากโปร่งใส → ครีมขาว */
+  background: linear-gradient(to bottom, transparent 0%, rgba(242,245,255,.96) 38%, rgba(240,244,255,1) 100%);
+}
+footer p {
+  font-size: .68rem; color: #7888a8;
+  line-height: 1.9; max-width: 620px; margin: 0 auto;
+}
+footer strong { color: #6b7db3; }
+
+html.theme-evening footer {
+  background: linear-gradient(to bottom, transparent 0%, rgba(244,230,235,.96) 38%, rgba(243,228,234,1) 100%);
+}
+html.theme-evening footer p  { color: #9A7888; }
+html.theme-evening footer strong { color: #A0526C; }
+
+html.theme-night footer {
+  background: linear-gradient(to bottom, transparent 0%, rgba(9,18,44,.94) 35%, rgba(8,16,40,.98) 100%);
+}
+html.theme-night footer p  { color: rgba(148,172,216,.75); }
+html.theme-night footer strong { color: #A0B8E0; }

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fan Hearto Gacha Sim</title>
 <link rel="stylesheet" href="style.css">
+<script>(function(){var h=new Date().getHours();window._timeTheme=h>=5&&h<12?'morning':h>=12&&h<19?'evening':'night';document.documentElement.classList.add('theme-'+window._timeTheme);})();</script>
 </head>
 <body>
 
@@ -75,26 +76,64 @@
 <script src="gacha-database.js"></script>
 <script src="stats-modal.js"></script>
 <script src="compare-modal.js"></script>
+<script src="fx.js" defer></script>
 <script>
 // ── Background จาก THEME_META ──
 const params   = new URLSearchParams(location.search);
 const themeKey = params.get('theme') || '';
 
 (function() {
-  const bgUrl = getThemeBg(themeKey);
-  if (!bgUrl) return;
-  const img = document.createElement('img'); img.className = 'bg-img'; img.src = bgUrl;
+  const img = document.createElement('img');
+  img.className = 'bg-img';
+  img.src = 'images/BG_' + (window._timeTheme || 'morning') + '.png';
   document.getElementById('bg-layer').appendChild(img);
 })();
 
-// ── Deco bubbles ──
+// ── Deco effects ตามช่วงเวลา ──
 (function() {
-  const colors = ['#ffd84a','#ff8fb2','#4db8f0','#b0e8a0','#ffc0a0'];
-  for (let i = 0; i < 8; i++) {
-    const b = document.createElement('div'); b.className = 'deco-bubble';
-    const size = 18 + Math.random() * 35;
-    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;background:${colors[i%colors.length]};opacity:.3;animation-duration:${5+Math.random()*6}s;animation-delay:-${Math.random()*6}s;`;
-    document.body.appendChild(b);
+  const theme = window._timeTheme || 'morning';
+
+  if (theme === 'morning') {
+    const NR = 6;
+    for (let i = 0; i < NR; i++) {
+      const r = document.createElement('div'); r.className = 'deco-ray';
+      const w = 40 + Math.random() * 70;
+      const leftPct = -4 + i * 3.5;
+      const angle   = 8  + i * 11 + Math.random() * 7;
+      r.style.cssText = `width:${w}px;height:130vh;left:${leftPct}vw;top:-4vh;margin-left:${-w/2}px;background:linear-gradient(to bottom,rgba(255,240,130,.26) 0%,transparent 60%);clip-path:polygon(50% 0%,0% 100%,100% 100%);transform:rotate(${angle}deg);transform-origin:50% 0%;animation-duration:${3+Math.random()*3}s;animation-delay:-${Math.random()*5}s;`;
+      document.body.appendChild(r);
+    }
+    const glintPal = ['rgba(255,255,220,.9)','rgba(255,240,190,.85)','rgba(220,240,255,.9)','rgba(255,255,255,.95)'];
+    for (let i = 0; i < 7; i++) {
+      const b = document.createElement('div'); b.className = 'deco-bokeh';
+      const sz = 5 + Math.random() * 16;
+      const blur = 1.5 + Math.random() * 3.5;
+      b.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*70}vw;top:${5+Math.random()*55}vh;background:${glintPal[i%glintPal.length]};filter:blur(${blur}px);animation-duration:${3+Math.random()*4}s;animation-delay:-${Math.random()*6}s;`;
+      document.body.appendChild(b);
+    }
+  } else if (theme === 'evening') {
+    const N = 8;
+    for (let i = 0; i < N; i++) {
+      const r = document.createElement('div'); r.className = 'deco-ray';
+      const w = 50 + Math.random() * 85;
+      const leftPct = -5 + i * 3.8;
+      const angle   = 6  + i * 12 + Math.random() * 8;
+      r.style.cssText = `width:${w}px;height:130vh;left:${leftPct}vw;top:-4vh;margin-left:${-w/2}px;background:linear-gradient(to bottom,rgba(255,210,80,.38) 0%,transparent 65%);clip-path:polygon(50% 0%,0% 100%,100% 100%);transform:rotate(${angle}deg);transform-origin:50% 0%;animation-duration:${2.2+Math.random()*2.5}s;animation-delay:-${Math.random()*4}s;`;
+      document.body.appendChild(r);
+    }
+  } else {
+    for (let i = 0; i < 32; i++) {
+      const s = document.createElement('div'); s.className = 'deco-star';
+      const sz = .8 + Math.random() * 2.2;
+      s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:${Math.random()*75}vh;animation-duration:${.8+Math.random()*2.5}s;animation-delay:-${Math.random()*5}s;`;
+      document.body.appendChild(s);
+    }
+    for (let i = 0; i < 6; i++) {
+      const s = document.createElement('div'); s.className = 'deco-star';
+      const sz = 3 + Math.random() * 4;
+      s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:${Math.random()*58}vh;box-shadow:0 0 7px 3px rgba(180,215,255,.75);animation-duration:${1.2+Math.random()*2}s;animation-delay:-${Math.random()*4}s;`;
+      document.body.appendChild(s);
+    }
   }
 })();
 
@@ -116,27 +155,51 @@ function getAudio() {
 }
 function playSound(type) {
   const ctx = getAudio(), now = ctx.currentTime;
+
   if (type === 'deal') {
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination); o.type = 'triangle';
-    o.frequency.setValueAtTime(200, now); o.frequency.exponentialRampToValueAtTime(60, now+.08);
-    g.gain.setValueAtTime(.08,now); g.gain.linearRampToValueAtTime(.001,now+.08);
-    o.start(now); o.stop(now+.08);
+    // เสียงตึ๊ก — card drop: click แหลมสั้น + thud ต่ำ ทับกัน
+    const click = ctx.createOscillator(), cg = ctx.createGain();
+    click.connect(cg); cg.connect(ctx.destination);
+    click.type = 'triangle';
+    click.frequency.setValueAtTime(380, now);
+    click.frequency.exponentialRampToValueAtTime(140, now + .07);
+    cg.gain.setValueAtTime(.34, now);
+    cg.gain.exponentialRampToValueAtTime(.001, now + .07);
+    click.start(now); click.stop(now + .08);
+
+    const thud = ctx.createOscillator(), tg = ctx.createGain();
+    thud.connect(tg); tg.connect(ctx.destination);
+    thud.type = 'sine';
+    thud.frequency.setValueAtTime(140, now);
+    thud.frequency.exponentialRampToValueAtTime(55, now + .10);
+    tg.gain.setValueAtTime(.26, now);
+    tg.gain.exponentialRampToValueAtTime(.001, now + .10);
+    thud.start(now); thud.stop(now + .11);
+
   } else if (type === 'reveal') {
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination); o.type = 'sine';
-    o.frequency.setValueAtTime(440, now); o.frequency.exponentialRampToValueAtTime(560, now+.12);
-    g.gain.setValueAtTime(.07,now); g.gain.linearRampToValueAtTime(.001,now+.12);
-    o.start(now); o.stop(now+.12);
-  } else if (type === 'rare') {
-    [523,659,784,1047,1319,1568].forEach((freq,i) => {
+    // เสียงเปิดการ์ดพร้อมกัน — rising chime
+    [440, 550, 660].forEach((freq, i) => {
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination); o.type = 'sine';
-      const t = now + i*.05;
+      const t = now + i * .045;
       o.frequency.setValueAtTime(freq, t);
-      g.gain.setValueAtTime(0,now); g.gain.linearRampToValueAtTime(.055,t+.02);
-      g.gain.exponentialRampToValueAtTime(.001, t+.8);
-      o.start(now); o.stop(t+.8);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(.22, t + .018);
+      g.gain.exponentialRampToValueAtTime(.001, t + .22);
+      o.start(now); o.stop(t + .23);
+    });
+
+  } else if (type === 'rare') {
+    // เสียงได้การ์ด rare — fanfare ไล่โน้ต
+    [523, 659, 784, 1047, 1319, 1568].forEach((freq, i) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination); o.type = 'sine';
+      const t = now + i * .055;
+      o.frequency.setValueAtTime(freq, t);
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(.22, t + .02);
+      g.gain.exponentialRampToValueAtTime(.001, t + .55);
+      o.start(now); o.stop(t + .56);
     });
   }
 }
@@ -419,12 +482,14 @@ renderLangSwitcher('lang-switcher');
 })();
 </script>
 
-<footer style="position:relative;z-index:1;text-align:center;padding:1.5rem 1rem 2rem;margin-top:2rem;border-top:1px solid #e0e7ff;">
-  <p style="font-size:.7rem;color:#94a3b8;line-height:1.7;max-width:580px;margin:0 auto;">
-    🎮 <strong style="color:#6b7db3">Fan-made Heartopia Gacha Simulator</strong><br>
-    This website is not affiliated with, endorsed by, or sponsored by the official Heartopia team or XD Games.<br>
-    All game assets, images, trademarks, and copyrights belong to their respective owners.<br>
-    Created for entertainment purposes only and not for profit.
+<footer>
+  <p>🎮 <strong>Fan-made Heartopia Gacha Simulator</strong><br>
+    This is an unofficial, fan-made simulator created for entertainment and statistical education purposes only.<br>
+    This website is not affiliated with, endorsed by, or sponsored by the official Heartopia team or XD Games in any way.<br>
+    All game assets, names, images, characters, trademarks, and copyrights are the property of their respective owners.<br>
+    No real money transactions occur on this site. No in-game items, currency, or benefits are sold or distributed.<br>
+    This site does not generate revenue and is operated strictly on a non-commercial basis.<br>
+    If you are a rights holder and have concerns, please contact us and we will respond promptly.
   </p>
 </footer>
 </body>

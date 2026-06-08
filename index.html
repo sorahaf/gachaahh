@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Heartopia — Gacha Simulator</title>
 <link rel="stylesheet" href="style.css">
+<script>(function(){var h=new Date().getHours();window._timeTheme=h>=5&&h<12?'morning':h>=12&&h<19?'evening':'night';document.documentElement.classList.add('theme-'+window._timeTheme);})();</script>
 </head>
 <body>
 
@@ -12,6 +13,7 @@
 
 <div class="wrap">
   <p class="portal-title" data-i18n="portalTitle">✨ Fan-made Hearto Gacha Sim ✨</p>
+  <div class="portal-divider"></div>
   <p class="portal-sub" data-i18n="portalSub">เลือกตู้สุ่มที่ต้องการทดสอบ</p>
   <div style="text-align:right;margin-bottom:.5rem"><div id="lang-switcher" style="display:inline-flex;gap:6px"></div></div>
   <div id="portal-root"></div>
@@ -20,6 +22,7 @@
 <script src="i18n.js"></script>
 <script src="gacha-core.js"></script>
 <script src="gacha-database.js"></script>
+<script src="fx.js" defer></script>
 <script>
 const GROUP_META = {
   big:    { label: () => t('groupBig'),      order: 0 },
@@ -33,22 +36,66 @@ const TYPE_BADGE = {
   heart_step:  () => t('badgeHeartStep')
 };
 
-// ── Deco bubbles ──
+// ── Deco effects ตามช่วงเวลา ──
 (function() {
-  const colors = ['#ffd84a','#ff8fb2','#4db8f0','#b0e8a0','#ffc0a0','#c8d8ff'];
-  for (let i = 0; i < 12; i++) {
-    const b = document.createElement('div'); b.className = 'deco-bubble';
-    const size = 18 + Math.random() * 40;
-    b.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}vw;top:${Math.random()*100}vh;background:${colors[i%colors.length]};opacity:.35;animation-duration:${5+Math.random()*6}s;animation-delay:-${Math.random()*6}s;`;
-    document.body.appendChild(b);
+  const theme = window._timeTheme || 'morning';
+
+  if (theme === 'morning') {
+    // แสงซันไรส์จากมุมซ้ายบน
+    const NR = 7;
+    for (let i = 0; i < NR; i++) {
+      const r = document.createElement('div'); r.className = 'deco-ray';
+      const w = 45 + Math.random() * 75;
+      const leftPct = -4 + i * 3.5;           // กระจายจาก -4vw → ~20vw
+      const angle   = 8  + i * 11 + Math.random() * 7; // 8°→~84° แฉกขวา
+      r.style.cssText = `width:${w}px;height:130vh;left:${leftPct}vw;top:-4vh;margin-left:${-w/2}px;background:linear-gradient(to bottom,rgba(255,240,130,.26) 0%,transparent 60%);clip-path:polygon(50% 0%,0% 100%,100% 100%);transform:rotate(${angle}deg);transform-origin:50% 0%;animation-duration:${3+Math.random()*3}s;animation-delay:-${Math.random()*5}s;`;
+      document.body.appendChild(r);
+    }
+    // แสงสะท้อนเล็กๆ (blur น้อย เหมือน glint)
+    const glintPal = ['rgba(255,255,220,.9)','rgba(255,240,190,.85)','rgba(220,240,255,.9)','rgba(255,255,255,.95)'];
+    for (let i = 0; i < 9; i++) {
+      const b = document.createElement('div'); b.className = 'deco-bokeh';
+      const sz = 5 + Math.random() * 18;
+      const blur = 1.5 + Math.random() * 3.5;
+      b.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*70}vw;top:${5+Math.random()*55}vh;background:${glintPal[i%glintPal.length]};filter:blur(${blur}px);animation-duration:${3+Math.random()*4}s;animation-delay:-${Math.random()*6}s;`;
+      document.body.appendChild(b);
+    }
+
+  } else if (theme === 'evening') {
+    // sun rays จากมุมซ้าย แสงแดดช่วงบ่าย
+    const N = 8;
+    for (let i = 0; i < N; i++) {
+      const r = document.createElement('div'); r.className = 'deco-ray';
+      const w = 55 + Math.random() * 90;
+      const leftPct = -5 + i * 3.8;
+      const angle   = 6  + i * 12 + Math.random() * 8;
+      r.style.cssText = `width:${w}px;height:130vh;left:${leftPct}vw;top:-4vh;margin-left:${-w/2}px;background:linear-gradient(to bottom,rgba(255,210,80,.38) 0%,transparent 65%);clip-path:polygon(50% 0%,0% 100%,100% 100%);transform:rotate(${angle}deg);transform-origin:50% 0%;animation-duration:${2.2+Math.random()*2.5}s;animation-delay:-${Math.random()*4}s;`;
+      document.body.appendChild(r);
+    }
+
+  } else {
+    // night: ดาวเล็กๆ (น้อยลง)
+    for (let i = 0; i < 32; i++) {
+      const s = document.createElement('div'); s.className = 'deco-star';
+      const sz = .8 + Math.random() * 2.2;
+      s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:${Math.random()*75}vh;animation-duration:${.8+Math.random()*2.5}s;animation-delay:-${Math.random()*5}s;`;
+      document.body.appendChild(s);
+    }
+    // ดาวใหญ่ glow
+    for (let i = 0; i < 6; i++) {
+      const s = document.createElement('div'); s.className = 'deco-star';
+      const sz = 3 + Math.random() * 4;
+      s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}vw;top:${Math.random()*58}vh;box-shadow:0 0 7px 3px rgba(180,215,255,.75);animation-duration:${1.2+Math.random()*2}s;animation-delay:-${Math.random()*4}s;`;
+      document.body.appendChild(s);
+    }
   }
 })();
 
-// ── Background จาก THEME_META (ใช้รูปของ theme แรกที่มี bgUrl) ──
+// ── Background ตามช่วงเวลา ──
 (function() {
-  const bgUrl = Object.values(THEME_META).map(t => t.bgUrl).find(u => u);
-  if (!bgUrl) return;
-  const img = document.createElement('img'); img.className = 'bg-img'; img.src = bgUrl;
+  const img = document.createElement('img');
+  img.className = 'bg-img';
+  img.src = 'images/BG_' + (window._timeTheme || 'morning') + '.png';
   document.getElementById('bg-layer').appendChild(img);
 })();
 
@@ -64,6 +111,40 @@ function buildStructure() {
   return structure;
 }
 
+function isThemeExpired(themeKey) {
+  const end = THEME_META[themeKey]?.endDate;
+  if (!end) return false;
+  return end < new Date().toISOString().slice(0, 10);
+}
+
+function makeCard(themeKey, info, expired) {
+  const bannerUrl = getThemeBanner(themeKey);
+  const subNames  = info.ids.map(id => GACHA_DATABASE[id]?.label || id).join(' · ');
+  const meta      = THEME_META[themeKey] || {};
+  let endLabel = '';
+  if (meta.endDate) {
+    const d = new Date(meta.endDate);
+    const dd = String(d.getDate()).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    endLabel = `${dd}/${mm}/${d.getFullYear()}`;
+  }
+  return `
+    <a class="banner-card${expired ? ' banner-card--expired' : ''}"
+       href="simulator.html?theme=${encodeURIComponent(themeKey)}">
+      ${bannerUrl
+        ? `<img class="banner-img" src="${bannerUrl}" alt="${info.theme}">`
+        : `<div class="banner-placeholder">🎁</div>`}
+      <div class="banner-overlay"></div>
+      <div class="banner-content">
+        <div class="banner-title">${info.theme}</div>
+        <div class="banner-meta">${subNames}</div>
+        ${endLabel ? `<div class="banner-date">${expired ? t('bannerClosed') : t('bannerUntil')} ${endLabel}</div>` : ''}
+      </div>
+      <span class="banner-type-badge">${(TYPE_BADGE[info.cabinetType]?.() ?? info.cabinetType)}</span>
+    </a>
+  `;
+}
+
 function render() {
   const structure = buildStructure();
   const root = document.getElementById('portal-root');
@@ -72,8 +153,25 @@ function render() {
   const sorted = Object.entries(structure)
     .sort(([a],[b]) => (GROUP_META[a]?.order??9) - (GROUP_META[b]?.order??9));
 
+  const expiredList = [];
+
   for (const [group, themes] of sorted) {
     const meta = GROUP_META[group] || { label: group };
+
+    // active: เรียงปิดช้าสุด (วันไกลสุด) ก่อน → ใกล้ปิดอยู่ล่าง
+    const activeEntries = Object.entries(themes)
+      .filter(([k]) => !isThemeExpired(k))
+      .sort(([a],[b]) => {
+        const da = THEME_META[a]?.endDate || '2099-01-01';
+        const db = THEME_META[b]?.endDate || '2099-01-01';
+        return da > db ? -1 : da < db ? 1 : 0;
+      });
+
+    Object.entries(themes)
+      .filter(([k]) => isThemeExpired(k))
+      .forEach(([k,v]) => expiredList.push({ themeKey: k, info: v }));
+
+    if (activeEntries.length === 0) continue;
 
     const lbl = document.createElement('div');
     lbl.className = 'group-label';
@@ -82,45 +180,96 @@ function render() {
 
     const grid = document.createElement('div');
     grid.className = 'banner-grid';
-
-    for (const [themeKey, info] of Object.entries(themes)) {
-      // ดึง bannerUrl จาก THEME_META
-      const bannerUrl = getThemeBanner(themeKey);
-      const subNames  = info.ids.map(id => GACHA_DATABASE[id]?.label || id).join(' · ');
-
-      grid.insertAdjacentHTML('beforeend', `
-        <a class="banner-card" href="simulator.html?theme=${encodeURIComponent(themeKey)}">
-          ${bannerUrl
-            ? `<img class="banner-img" src="${bannerUrl}" alt="${info.theme}">`
-            : `<div class="banner-placeholder">🎁</div>`}
-          <div class="banner-overlay"></div>
-          <div class="banner-content">
-            <div class="banner-title">${info.theme}</div>
-            <div class="banner-meta">${subNames}</div>
-          </div>
-          <span class="banner-type-badge">${(TYPE_BADGE[info.cabinetType]?.() ?? info.cabinetType)}</span>
-        </a>
-      `);
-    }
+    activeEntries.forEach(([themeKey, info]) =>
+      grid.insertAdjacentHTML('beforeend', makeCard(themeKey, info, false)));
     root.appendChild(grid);
   }
+
+  // ── section ปิดไปแล้ว ──
+  if (expiredList.length > 0) {
+    const expLbl = document.createElement('div');
+    expLbl.className = 'group-label group-label--expired';
+    expLbl.textContent = t('groupExpired');
+    root.appendChild(expLbl);
+
+    const expGrid = document.createElement('div');
+    expGrid.className = 'banner-grid';
+    expiredList.forEach(({ themeKey, info }) =>
+      expGrid.insertAdjacentHTML('beforeend', makeCard(themeKey, info, true)));
+    root.appendChild(expGrid);
+  }
+}
+
+function buildArchTitle() {
+  const theme = window._timeTheme || 'morning';
+  const emMap  = { morning:'🍃', evening:'☀️', night:'🌟' };
+  const em     = emMap[theme];
+  const stroke = theme === 'night' ? '#60A5FA' : '#F472B6';
+  const shadow = theme === 'night' ? 'rgba(20,50,180,.55)' : 'rgba(170,40,100,.5)';
+  const NS = 'http://www.w3.org/2000/svg';
+
+  function el(tag, attrs) {
+    const e = document.createElementNS(NS, tag);
+    for (const [k,v] of Object.entries(attrs)) e.setAttribute(k, v);
+    return e;
+  }
+
+  const svg = el('svg', { viewBox:'0 0 700 96' });
+  svg.style.cssText = 'width:100%;max-width:680px;display:block;margin:0 auto;overflow:visible';
+
+  const defs = el('defs', {});
+
+  // Arc path — gentle smile
+  defs.appendChild(Object.assign(el('path', {
+    id:'portalArc', fill:'none',
+    d:'M -100,92 Q 360,8 820,92'
+  })));
+
+  // Drop shadow filter
+  const flt = el('filter', { id:'titleShadow', x:'-10%', width:'120%', y:'-50%', height:'200%' });
+  const fds = el('feDropShadow', { dx:'0', dy:'5', stdDeviation:'5', 'flood-color':'rgba(0,0,0,.22)' });
+  flt.appendChild(fds);
+  // 3D bottom fill
+  const flt2 = el('filter', { id:'titleBevel', x:'-10%', width:'120%', y:'-50%', height:'200%' });
+  const fds2 = el('feDropShadow', { dx:'0', dy:'3', stdDeviation:'0', 'flood-color':shadow });
+  flt2.appendChild(fds2);
+  defs.appendChild(flt); defs.appendChild(flt2);
+  svg.appendChild(defs);
+
+  // Text along arc
+  const txt = el('text', {
+    'font-family':"'Nunito','Noto Sans Thai',sans-serif",
+    'font-weight':'900', 'font-size':'50',
+    'text-anchor':'middle',
+    fill:'#fff',
+    stroke, 'stroke-width':'5', 'paint-order':'stroke fill',
+    filter:'url(#titleShadow)'
+  });
+
+  const tp = el('textPath', { href:'#portalArc', startOffset:'50%' });
+  const p1 = el('tspan', {}); p1.textContent = 'Fan-made He';
+  const hrt = el('tspan', { 'font-size':'34', 'baseline-shift':'-4' }); hrt.textContent = '❤︎';
+  const p2 = el('tspan', {}); p2.textContent = 'rto Gacha Sim';
+  tp.append(p1, hrt, p2);
+  txt.appendChild(tp);
+  svg.appendChild(txt);
+
+  const container = document.querySelector('.portal-title');
+  container.innerHTML = '';
+  container.appendChild(svg);
 }
 
 renderLangSwitcher("lang-switcher");
 applyI18n();
+buildArchTitle();
 render();
 </script>
 
-<footer style="position:relative;z-index:1;text-align:center;padding:1.5rem 1rem 2.5rem;margin-top:2rem;border-top:1px solid #e0e7ff;">
-  <p style="font-size:.68rem;color:#94a3b8;line-height:1.9;max-width:620px;margin:0 auto;">
-    🎮 <strong style="color:#6b7db3">Fan-made Heartopia Gacha Simulator</strong><br>
+<footer>
+  <p>🎮 <strong>Fan-made Heartopia Gacha Simulator</strong><br>
     This is an unofficial, fan-made simulator created for entertainment and statistical education purposes only.<br>
     This website is not affiliated with, endorsed by, or sponsored by the official Heartopia team or XD Games in any way.<br>
     All game assets, names, images, characters, trademarks, and copyrights are the property of their respective owners.<br>
     No real money transactions occur on this site. No in-game items, currency, or benefits are sold or distributed.<br>
     This site does not generate revenue and is operated strictly on a non-commercial basis.<br>
-    If you are a rights holder and have concerns, please contact us and we will respond promptly.
-  </p>
-</footer>
-</body>
-</html>
+    If you are a rights holder and have concerns, please contact us and we will respond prompt

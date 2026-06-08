@@ -551,25 +551,35 @@ const GACHA_DATABASE = {
 //   อื่นๆ   → URL ตรงไปที่ไฟล์ภาพ (.jpg/.png/.webp)
 // ══════════════════════════════════════════
 const THEME_META = {
-  "✨ Golden Mirage": {
-    bannerUrl: "images/Golden%20Mirage.jpg",
-    bgUrl:     ""
+  "🌵 Golden Mirage": {
+    bannerUrl:  "images/Golden%20Mirage.jpg",
+    bgUrl:      "",
+    startDate:  "2026-05-30",
+    endDate:    "2026-07-04"
   },
   "🎪 Lustrous Parade": {
-    bannerUrl: "images/Lustrous%20Parade.jpg",
-    bgUrl:     ""
+    bannerUrl:  "images/Lustrous%20Parade.jpg",
+    bgUrl:      "",
+    startDate:  "2026-05-02",
+    endDate:    "2026-06-26"
   },
   "🎨 Graffiti Channel": {
-    bannerUrl: "images/Graffiti%20Channel.jpg",
-    bgUrl:     ""
+    bannerUrl:  "images/Graffiti%20Channel.jpg",
+    bgUrl:      "",
+    startDate:  "2026-05-07",
+    endDate:    "2026-06-17"
   },
   "🐻 Butter Bear": {
-    bannerUrl: "images/Butter%20Bear.jpg",
-    bgUrl:     ""
+    bannerUrl:  "images/Butter%20Bear.jpg",
+    bgUrl:      "",
+    startDate:  null,
+    endDate:    "2026-06-28"
   },
   "🌧️ Raindrop Song": {
-    bannerUrl: "images/Raindrop%20Song.jpg",
-    bgUrl:     ""
+    bannerUrl:  "images/Raindrop%20Song.jpg",
+    bgUrl:      "",
+    startDate:  "2026-05-07",
+    endDate:    "2026-06-17"
   }
 };
 

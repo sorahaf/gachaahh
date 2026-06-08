@@ -12,6 +12,9 @@ const LANGS = {
     groupSmall:       '🎟️ ตู้ตั๋วเล็ก',
     groupCollab:      '🤩 ตู้คอลแลป',
     groupHeart:       '💙❤️ ตู้หัวใจเล็ก',
+    groupExpired:     '🔒 ปิดไปแล้ว',
+    bannerUntil:      '⏳ ถึง',
+    bannerClosed:     '🔒 ปิด',
     badgePityPool:    'Pity Pool',
     badgeTicketStep:  'Ticket Step',
     badgeHeartStep:   'Heart Step',
@@ -124,6 +127,9 @@ const LANGS = {
     groupBig:         '🏛️ Big Gacha',
     groupSmall:       '🎟️ Small Ticket Gacha',
     groupCollab:      '🤩 Collab Gacha',
+    groupExpired:     '🔒 Closed',
+    bannerUntil:      '⏳ Until',
+    bannerClosed:     '🔒 Closed',
     groupHeart:       '💙❤️ Small Heart Gacha',
     badgePityPool:    'Pity Pool',
     badgeTicketStep:  'Ticket Step',
@@ -280,6 +286,7 @@ function switchLang(lang) {
   setLang(lang);
   applyI18n();
   renderLangSwitcher('lang-switcher');
+  if (typeof buildArchTitle === 'function') buildArchTitle(); // index.html arch title
   // re-render dynamic UI if available
   if (typeof render === 'function') render();         // index.html
   if (typeof updateUI === 'function') updateUI();     // simulator.html
